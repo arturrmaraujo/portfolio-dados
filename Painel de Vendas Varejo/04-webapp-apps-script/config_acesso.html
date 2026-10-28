@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 24px; color: #171717; font: 14px Arial, sans-serif; background: #f7f7f7; }
+    h2 { margin: 0 0 8px; font-size: 20px; }
+    p { margin: 0 0 20px; color: #666; line-height: 1.45; }
+    label { display: block; margin: 13px 0 5px; font-size: 12px; font-weight: 700; text-transform: uppercase; }
+    input { width: 100%; padding: 11px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; }
+    button { width: 100%; margin-top: 20px; padding: 12px; border: 0; border-radius: 8px; color: white; background: #111; font-weight: 700; cursor: pointer; }
+    button:disabled { opacity: .55; cursor: wait; }
+    #mensagem { min-height: 20px; margin-top: 12px; color: #b42318; font-size: 13px; }
+    .nota { margin-top: 15px; color: #777; font-size: 11px; }
+  </style>
+</head>
+<body>
+  <h2>Acesso gerencial</h2>
+  <p>Defina o usuário e a senha únicos usados para entrar na visão gerencial.</p>
+  <form id="formAcesso">
+    <label for="usuario">Usuário</label>
+    <input id="usuario" autocomplete="username" minlength="3" required>
+    <label for="senha">Senha</label>
+    <input id="senha" type="password" autocomplete="new-password" minlength="8" required>
+    <label for="confirmacao">Confirmar senha</label>
+    <input id="confirmacao" type="password" autocomplete="new-password" minlength="8" required>
+    <button id="salvar" type="submit">Salvar acesso</button>
+    <div id="mensagem"></div>
+  </form>
+  <div class="nota">Uma nova configuração substitui imediatamente a credencial anterior.</div>
+  <script>
+    document.getElementById('formAcesso').addEventListener('submit', function(evento) {
+      evento.preventDefault();
+      var usuario = document.getElementById('usuario').value.trim();
+      var senha = document.getElementById('senha').value;
+      var confirmacao = document.getElementById('confirmacao').value;
+      var mensagem = document.getElementById('mensagem');
+      var botao = document.getElementById('salvar');
+      if (senha !== confirmacao) {
+        mensagem.textContent = 'As senhas não coincidem.';
+        return;
+      }
+      botao.disabled = true;
+      mensagem.textContent = 'Salvando...';
+      google.script.run
+        .withSuccessHandler(function() {
+          mensagem.style.color = '#067647';
+          mensagem.textContent = 'Acesso salvo com sucesso.';
+          setTimeout(function() { google.script.host.close(); }, 900);
+        })
+        .withFailureHandler(function(erro) {
+          botao.disabled = false;
+          mensagem.style.color = '#b42318';
+          mensagem.textContent = erro && erro.message ? erro.message : 'Não foi possível salvar.';
+        })
+        .salvarConfiguracaoAcessoGerencial(usuario, senha);
+    });
+  </script>
+</body>
+</html>

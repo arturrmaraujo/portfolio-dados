@@ -1,0 +1,1754 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root { --ink:#171717; --muted:#717171; --line:#e6e6e6; --paper:#f5f5f3; --good:#067647; --bad:#b42318; --stable:#b54708; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--paper); color:var(--ink); font-family:Inter,Arial,sans-serif; }
+    .topbar { background:#111; color:#fff; padding:18px 0; }
+    .eyebrow { color:#aaa; font-size:.7rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; }
+    .page-title { margin:2px 0 0; font-size:clamp(1.35rem,3vw,2rem); font-weight:800; }
+    .btn-line { border:1px solid #555; color:#fff; background:transparent; border-radius:8px; padding:8px 12px; font-size:.75rem; font-weight:700; }
+    .filterbar { position:sticky; top:0; z-index:20; padding:14px 0; border-bottom:1px solid var(--line); background:rgba(245,245,243,.96); backdrop-filter:blur(10px); transition:padding .2s ease,box-shadow .2s ease; }
+    .filter-label { display:block; margin-bottom:4px; color:var(--muted); font-size:.65rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    .form-select,.filter-button { height:42px; border:1px solid #d6d6d6; border-radius:9px; background:#fff; font-size:.82rem; }
+    .filter-button { width:100%; display:flex; align-items:center; justify-content:space-between; padding:0 12px; text-align:left; }
+    .store-menu { min-width:290px; max-height:330px; overflow:auto; padding:12px; }
+    .section-title { margin:30px 0 12px; font-size:.78rem; font-weight:900; letter-spacing:.1em; text-transform:uppercase; }
+    .metric-card,.panel { height:100%; border:1px solid var(--line); border-radius:13px; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,.025); }
+    .metric-card { padding:18px; }
+    .metric-label { color:var(--muted); font-size:.68rem; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+    .metric-value { margin-top:8px; font-size:clamp(1.25rem,3vw,1.85rem); font-weight:850; letter-spacing:-.035em; }
+    .metric-note { margin-top:5px; min-height:18px; color:var(--muted); font-size:.72rem; }
+    .metric-value.good { color:var(--good); }
+    .metric-value.bad { color:var(--bad); }
+    .metric-value.stable { color:var(--stable); }
+    .panel { padding:18px; }
+    .panel-head { display:flex; gap:12px; align-items:flex-start; justify-content:space-between; margin-bottom:15px; }
+    .panel-title { margin:0; font-size:.92rem; font-weight:850; }
+    .panel-subtitle { margin:3px 0 0; color:var(--muted); font-size:.7rem; }
+    .toggle { display:flex; padding:3px; border:1px solid var(--line); border-radius:8px; background:#fafafa; }
+    .toggle button { border:0; border-radius:6px; padding:6px 9px; background:transparent; color:var(--muted); font-size:.65rem; font-weight:800; }
+    .toggle button.active { background:#111; color:#fff; }
+    .chart-box { position:relative; height:300px; }
+    .chart-box.small { height:260px; }
+    .chart-box.distribution-chart-box { flex:1; height:465px; min-height:465px; }
+    .filterbar .filter-label,.filterbar .form-select,.filterbar .filter-button,.filterbar .btn { transition:height .2s ease,min-height .2s ease,padding .2s ease,font-size .2s ease,margin .2s ease; }
+    .filterbar.compact { padding:6px 0; box-shadow:0 4px 14px rgba(15,23,42,.09); }
+    .filterbar.compact .filter-label { margin-bottom:2px; font-size:.56rem; line-height:1; }
+    .filterbar.compact .form-select,.filterbar.compact .filter-button,.filterbar.compact .btn { height:34px !important; min-height:34px !important; padding-top:.25rem; padding-bottom:.25rem; font-size:.74rem; }
+    .status { display:inline-block; border-radius:99px; padding:4px 8px; font-size:.62rem; font-weight:900; text-transform:uppercase; }
+    .status.good { color:var(--good); background:#ecfdf3; }
+    .status.bad { color:var(--bad); background:#fff1f0; }
+    .status.stable { color:var(--stable); background:#fff7ed; }
+    .status.muted { color:#555; background:#f1f1f1; }
+    .table > :not(caption) > * > * { padding:12px 10px; border-color:#eee; vertical-align:middle; }
+    .table th { color:var(--muted); font-size:.62rem; letter-spacing:.07em; text-transform:uppercase; }
+    .table td { font-size:.76rem; }
+    .login-wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px; background:#111; }
+    .login-card { width:min(100%,390px); padding:30px; border-radius:16px; background:#fff; }
+    .login-card h1 { font-size:1.5rem; font-weight:850; }
+    .login-card p { color:var(--muted); font-size:.82rem; }
+    .login-card input { height:46px; }
+    .loading { position:fixed; inset:0; z-index:100; display:none; align-items:center; justify-content:center; background:rgba(245,245,243,.85); }
+    .empty { padding:24px; color:var(--muted); text-align:center; font-size:.8rem; }
+    .meta-pendente { color:var(--stable); }
+    .trend-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; }
+    .trend-item { padding:14px; border:1px solid var(--line); border-radius:10px; background:#fafafa; }
+    .trend-value { margin-top:5px; font-size:1.25rem; font-weight:850; }
+    .table-scroll { max-height:520px; overflow:auto; }
+    .table-scroll thead th { position:sticky; top:0; z-index:2; background:#fff; }
+    .rank { width:32px; height:32px; display:inline-flex; align-items:center; justify-content:center; border-radius:50%; background:#f1f1f1; font-weight:850; }
+    .partial-note { color:var(--stable); font-weight:800; }
+    .planning-alert { margin:0; padding-left:18px; color:var(--muted); font-size:.76rem; }
+    .section-with-heading { display:flex; flex-direction:column; }
+    .section-with-heading .panel { flex:1; height:auto; display:flex; flex-direction:column; }
+    .sort-button { display:inline-flex; align-items:center; justify-content:flex-end; gap:4px; width:100%; padding:0; border:0; background:transparent; color:inherit; font:inherit; font-weight:inherit; letter-spacing:inherit; text-transform:inherit; white-space:nowrap; }
+    .sort-button:hover,.sort-button:focus { color:var(--ink); }
+    .sort-indicator { min-width:10px; color:var(--ink); font-size:.72rem; }
+    .comparison-controls { display:flex; flex-wrap:wrap; gap:10px; align-items:end; }
+    .comparison-control { min-width:185px; }
+    .planner-step { margin-bottom:24px; }
+    .planner-step-number { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; margin-right:7px; border-radius:50%; background:#111; color:#fff; font-size:.7rem; font-weight:800; }
+    .planner-reference { color:var(--muted); font-size:.7rem; }
+    .planner-input { min-width:128px; text-align:right; }
+    .planner-summary { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:44px; padding:10px 14px; border:1px solid var(--line); border-radius:10px; background:#fafafa; font-size:.78rem; }
+    #statusRevisaoPesos { display:flex; align-items:center; white-space:nowrap; }
+    .planner-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; justify-content:flex-end; }
+    .planner-brand-status { padding:8px 10px; border:1px solid var(--line); border-radius:8px; background:#fafafa; font-size:.75rem; }
+    @media (max-width:767px) {
+      .filterbar { position:static; }
+      .filterbar.compact { padding:14px 0; box-shadow:none; }
+      .filterbar.compact .filter-label { margin-bottom:4px; font-size:.65rem; }
+      .filterbar.compact .form-select,.filterbar.compact .filter-button,.filterbar.compact .btn { height:42px !important; min-height:42px !important; font-size:inherit; }
+      .panel { padding:14px; }
+      .chart-box { height:260px; }
+      .chart-box.distribution-chart-box { height:360px; min-height:360px; }
+      .table-responsive { font-size:.7rem; }
+      .trend-grid { grid-template-columns:1fr; }
+      .planner-summary { align-items:flex-start; flex-direction:column; }
+      #statusRevisaoPesos { white-space:normal; }
+    }
+  </style>
+</head>
+<body>
+  <div id="login" class="login-wrap">
+    <div class="login-card">
+      <div class="eyebrow text-dark mb-2">Painel Rede Varejo</div>
+      <h1>Visão gerencial</h1>
+      <p>Entre com a credencial única configurada pelo proprietário da planilha.</p>
+      <form id="formLogin">
+        <label class="filter-label mt-4" for="loginUsuario">Usuário</label>
+        <input class="form-control" id="loginUsuario" autocomplete="username" required>
+        <label class="filter-label mt-3" for="loginSenha">Senha</label>
+        <input class="form-control" id="loginSenha" type="password" autocomplete="current-password" required>
+        <button id="btnLogin" class="btn btn-dark w-100 mt-4 py-2 fw-bold" type="submit">Entrar</button>
+        <div id="erroLogin" class="text-danger small mt-3" aria-live="polite"></div>
+      </form>
+      <a id="linkOperacionalLogin" class="btn btn-link text-secondary w-100 mt-2 small" href="#" target="_top">Voltar ao painel operacional</a>
+    </div>
+  </div>
+
+  <main id="aplicacao" class="d-none">
+    <header class="topbar">
+      <div class="container-fluid px-3 px-lg-4 d-flex align-items-center justify-content-between gap-3">
+        <div><div class="eyebrow">Painel Rede Varejo</div><h1 class="page-title">Visão gerencial</h1></div>
+        <div class="d-flex gap-2"><button class="btn-line" onclick="abrirPlanejadorMetas()">Planejar metas</button><a id="linkOperacionalTopo" class="btn-line text-decoration-none" href="#" target="_top">Operacional</a><button class="btn-line" onclick="sair()">Sair</button></div>
+      </div>
+    </header>
+
+    <section class="filterbar">
+      <div class="container-fluid px-3 px-lg-4">
+        <div class="row g-2 align-items-end">
+          <div class="col-6 col-lg-1"><label class="filter-label" for="filtroAno">Ano</label><select id="filtroAno" class="form-select" onchange="alterarAno()"></select></div>
+          <div class="col-6 col-lg-2"><label class="filter-label" for="filtroPeriodo">Período</label><select id="filtroPeriodo" class="form-select" onchange="renderizarTudo()"></select></div>
+          <div class="col-6 col-lg-2"><label class="filter-label" for="filtroMarca">Marca</label><select id="filtroMarca" class="form-select" onchange="renderizarTudo()"></select></div>
+          <div class="col-6 col-lg-5">
+            <label class="filter-label">Lojas</label>
+            <div class="dropdown"><button id="botaoLojas" class="filter-button" data-bs-toggle="dropdown" data-bs-auto-close="outside"><span id="textoLojas">Todas as lojas</span><span>▾</span></button><div id="menuLojas" class="dropdown-menu store-menu"></div></div>
+          </div>
+          <div class="col-12 col-lg-2"><button class="btn btn-outline-danger w-100" style="height:42px;font-size:.75rem;font-weight:800" onclick="restaurarFiltros()">Limpar filtros</button></div>
+        </div>
+      </div>
+    </section>
+
+    <div id="conteudoDashboard" class="container-fluid px-3 px-lg-4 pb-5">
+      <div class="d-flex justify-content-between align-items-end gap-3"><h2 class="section-title mb-0">Resumo do período</h2><div id="contextoPeriodo" class="text-secondary small text-end"></div></div>
+      <div class="row g-3 mt-0">
+        <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-label">Faturamento realizado</div><div id="kpiRealizado" class="metric-value">—</div><div id="notaRealizado" class="metric-note"></div></div></div>
+        <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-label">Meta financeira</div><div id="kpiMeta" class="metric-value">—</div><div id="notaMeta" class="metric-note"></div></div></div>
+        <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-label">Atingimento financeiro</div><div id="kpiAtingimento" class="metric-value">—</div><div id="notaAtingimento" class="metric-note"></div></div></div>
+        <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-label">Desvio financeiro</div><div id="kpiDesvio" class="metric-value">—</div><div id="notaDesvio" class="metric-note"></div></div></div>
+        <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-label">Unidades realizadas</div><div id="kpiUnidades" class="metric-value">—</div><div id="notaUnidades" class="metric-note"></div></div></div>
+        <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-label">Meta em unidades</div><div id="kpiMetaUnidades" class="metric-value">—</div><div id="notaMetaUnidades" class="metric-note"></div></div></div>
+        <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-label">Atingimento em unidades</div><div id="kpiAtingimentoUnidades" class="metric-value">—</div><div id="notaAtingimentoUnidades" class="metric-note"></div></div></div>
+        <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-label">Projeção de fechamento</div><div id="kpiProjecao" class="metric-value">—</div><div id="notaProjecao" class="metric-note"></div></div></div>
+      </div>
+
+      <div id="secaoRitmoAtual" class="d-none">
+        <h2 class="section-title">Meta e ritmo diário do ciclo atual</h2>
+        <div class="row g-3">
+          <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-label">Meta financeira diária</div><div id="kpiMetaDiariaR" class="metric-value">—</div><div id="notaMetaDiariaR" class="metric-note"></div></div></div>
+          <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-label">Ritmo necessário R$/dia</div><div id="kpiRitmoDiarioR" class="metric-value">—</div><div id="notaRitmoDiarioR" class="metric-note"></div></div></div>
+          <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-label">Meta diária em unidades</div><div id="kpiMetaDiariaQtd" class="metric-value">—</div><div id="notaMetaDiariaQtd" class="metric-note"></div></div></div>
+          <div class="col-6 col-xl-3"><div class="metric-card"><div class="metric-label">Ritmo necessário un./dia</div><div id="kpiRitmoDiarioQtd" class="metric-value">—</div><div id="notaRitmoDiarioQtd" class="metric-note"></div></div></div>
+        </div>
+      </div>
+
+      <h2 class="section-title">Tendência histórica</h2>
+      <div class="panel">
+        <div class="panel-head"><div><h3 class="panel-title">Média dos 3 últimos meses fechados × 3 anteriores</h3><p class="panel-subtitle">Estabilidade entre −5% e +5%. O mês parcial não participa do cálculo.</p></div><span id="statusTendenciaHistorica" class="status muted">—</span></div>
+        <div class="trend-grid"><div class="trend-item"><div class="metric-label">3 últimos fechados</div><div id="media3Atual" class="trend-value">—</div><div id="periodos3Atual" class="metric-note"></div></div><div class="trend-item"><div class="metric-label">3 meses anteriores</div><div id="media3Anterior" class="trend-value">—</div><div id="periodos3Anterior" class="metric-note"></div></div><div class="trend-item"><div class="metric-label">Variação</div><div id="variacaoTendenciaHistorica" class="trend-value">—</div><div class="metric-note">Baseada no faturamento realizado</div></div></div>
+      </div>
+
+      <h2 class="section-title">Evolução mês a mês</h2>
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3 class="panel-title">Desempenho mensal</h3><p class="panel-subtitle">Somente competências fechadas do ano selecionado.</p></div>
+          <div class="toggle"><button id="modoFaturamento" class="active" onclick="mudarModoEvolucao('FATURAMENTO')">Faturamento</button><button id="modoAtingimento" onclick="mudarModoEvolucao('ATINGIMENTO')">Atingimento</button><button id="modoUnidades" onclick="mudarModoEvolucao('UNIDADES')">Unidades</button></div>
+        </div>
+        <div class="chart-box"><canvas id="graficoEvolucao"></canvas></div>
+      </div>
+
+      <h2 class="section-title">Meta × realizado mensal</h2>
+      <div class="panel">
+        <div class="panel-head">
+          <div><h3 id="tituloMetaRealizado" class="panel-title">Meta financeira e faturamento realizado</h3><p class="panel-subtitle">Somente competências fechadas do ano selecionado.</p></div>
+          <div class="toggle"><button id="metaRealizadoFaturamento" class="active" onclick="mudarModoMetaRealizado('FATURAMENTO')">Faturamento</button><button id="metaRealizadoUnidades" onclick="mudarModoMetaRealizado('UNIDADES')">Unidades</button></div>
+        </div>
+        <div class="chart-box"><canvas id="graficoMetaRealizado"></canvas></div>
+      </div>
+
+      <h2 class="section-title">Comparativo entre meses</h2>
+      <div class="panel">
+        <div class="panel-head flex-wrap">
+          <div><h3 class="panel-title">Resultado do último mês fechado × mês de comparação</h3><p class="panel-subtitle">O mês comparado deve ser anterior ao mês analisado.</p></div>
+          <div class="comparison-controls">
+            <div class="comparison-control"><label class="filter-label" for="mesComparacaoA">Mês analisado</label><select id="mesComparacaoA" class="form-select" onchange="atualizarMesComparado()"></select></div>
+            <div class="comparison-control"><label class="filter-label" for="mesComparacaoB">Comparar com</label><select id="mesComparacaoB" class="form-select" onchange="renderizarComparativoMensal()"></select></div>
+            <div><label class="filter-label d-block">Visão</label><div class="toggle"><button id="comparativoMensalFaturamento" class="active" onclick="mudarModoComparativoMensal('FATURAMENTO')">Faturamento</button><button id="comparativoMensalUnidades" onclick="mudarModoComparativoMensal('UNIDADES')">Unidades</button></div></div>
+          </div>
+        </div>
+        <div id="avisoComparacaoMensal" class="empty d-none"></div>
+        <div id="conteudoComparacaoMensal">
+          <div class="row g-3 mb-3">
+            <div class="col-6 col-xl-3"><div class="metric-card"><div id="rotuloComparacaoA" class="metric-label">Mês analisado</div><div id="kpiComparacaoA" class="metric-value">—</div><div id="notaComparacaoA" class="metric-note"></div></div></div>
+            <div class="col-6 col-xl-3"><div class="metric-card"><div id="rotuloComparacaoB" class="metric-label">Mês comparado</div><div id="kpiComparacaoB" class="metric-value">—</div><div id="notaComparacaoB" class="metric-note"></div></div></div>
+            <div class="col-6 col-xl-3"><div class="metric-card"><div id="rotuloVariacaoComparacao" class="metric-label">Variação do faturamento</div><div id="kpiVariacaoFaturamento" class="metric-value">—</div><div id="notaVariacaoFaturamento" class="metric-note"></div></div></div>
+            <div class="col-6 col-xl-3"><div class="metric-card"><div id="rotuloVariacaoAtingimento" class="metric-label">Variação do atingimento</div><div id="kpiVariacaoAtingimento" class="metric-value">—</div><div id="notaVariacaoAtingimento" class="metric-note"></div></div></div>
+          </div>
+          <div class="chart-box"><canvas id="graficoComparativoMensal"></canvas></div>
+        </div>
+      </div>
+
+      <div class="row g-3">
+        <div class="col-xl-8 section-with-heading"><h2 class="section-title">Ranking de lojas</h2><div class="panel"><div class="table-responsive table-scroll"><table class="table mb-0"><thead><tr><th>#</th><th>Loja</th><th class="text-end"><button class="sort-button" onclick="ordenarLojas('realizado')">Faturamento <span id="ordemLojaRealizado" class="sort-indicator"></span></button></th><th class="text-end"><button class="sort-button" onclick="ordenarLojas('atingimento')">Ating. R$ <span id="ordemLojaAtingimento" class="sort-indicator"></span></button></th><th class="text-end"><button class="sort-button" onclick="ordenarLojas('unidades')">Unidades <span id="ordemLojaUnidades" class="sort-indicator"></span></button></th><th class="text-end"><button class="sort-button" onclick="ordenarLojas('atingimentoQtd')">Ating. un. <span id="ordemLojaAtingimentoQtd" class="sort-indicator"></span></button></th><th class="text-end"><button class="sort-button" onclick="ordenarLojas('desvio')">Desvio R$ <span id="ordemLojaDesvio" class="sort-indicator"></span></button></th><th class="text-end"><button class="sort-button" onclick="ordenarLojas('tendencia')">Tendência 3×3 <span id="ordemLojaTendencia" class="sort-indicator"></span></button></th></tr></thead><tbody id="tabelaLojas"></tbody></table></div></div></div>
+        <div class="col-xl-4 section-with-heading"><h2 class="section-title">Distribuição</h2><div class="panel"><div class="panel-head"><div><h3 class="panel-title">Participação por loja</h3><p class="panel-subtitle">Percentual do faturamento realizado no período.</p></div></div><div class="chart-box distribution-chart-box"><canvas id="graficoDistribuicao"></canvas></div></div></div>
+      </div>
+
+      <h2 class="section-title">Comparação entre lojas</h2>
+      <div class="panel"><div class="panel-head"><div><h3 class="panel-title">Evolução mensal por loja</h3><p id="subtituloComparacao" class="panel-subtitle">Selecione de duas a cinco lojas para comparar.</p></div><div class="toggle"><button id="comparacaoFaturamento" class="active" onclick="mudarModoComparacao('FATURAMENTO')">Faturamento</button><button id="comparacaoAtingimento" onclick="mudarModoComparacao('ATINGIMENTO')">Atingimento</button><button id="comparacaoUnidades" onclick="mudarModoComparacao('UNIDADES')">Unidades</button></div></div><div id="vazioComparacao" class="empty">Com “Todas as lojas”, o ranking permanece disponível. Selecione de duas a cinco lojas para abrir a comparação detalhada.</div><div id="caixaComparacao" class="chart-box d-none"><canvas id="graficoComparacao"></canvas></div></div>
+
+      <h2 class="section-title">Desempenho por marca</h2>
+      <div class="panel"><div class="table-responsive table-scroll"><table class="table mb-0"><thead><tr><th>Marca</th><th class="text-end"><button class="sort-button" onclick="ordenarMarcas('realizado')">Faturamento <span id="ordemMarcaRealizado" class="sort-indicator"></span></button></th><th class="text-end">Meta</th><th class="text-end"><button class="sort-button" onclick="ordenarMarcas('atingimento')">Atingimento <span id="ordemMarcaAtingimento" class="sort-indicator"></span></button></th><th class="text-end"><button class="sort-button" onclick="ordenarMarcas('unidades')">Unidades <span id="ordemMarcaUnidades" class="sort-indicator"></span></button></th><th class="text-end"><button class="sort-button" onclick="ordenarMarcas('desvio')">Desvio R$ <span id="ordemMarcaDesvio" class="sort-indicator"></span></button></th><th class="text-end">Média 3 meses</th><th class="text-end"><button class="sort-button" onclick="ordenarMarcas('tendencia')">Tendência 3×3 <span id="ordemMarcaTendencia" class="sort-indicator"></span></button></th></tr></thead><tbody id="tabelaMarcas"></tbody></table></div></div>
+
+      <h2 class="section-title">Representatividade das lojas por marca</h2>
+      <div class="panel"><div class="panel-head"><div><h3 class="panel-title">Participação no mês filtrado</h3><p class="panel-subtitle">Cada coluna de marca totaliza 100% entre as lojas incluídas no filtro.</p></div></div><div class="table-responsive table-scroll"><table class="table mb-0" id="tabelaRepresentatividade"></table></div></div>
+
+      <h2 class="section-title">Planejamento de metas e pesos</h2>
+      <div class="row g-3"><div class="col-xl-4"><div class="panel"><div class="metric-label">Competência do planejamento</div><div id="planejamentoCompetencia" class="metric-value">—</div><div id="planejamentoResumo" class="metric-note"></div><ul id="planejamentoAlertas" class="planning-alert mt-3"></ul></div></div><div class="col-xl-8"><div class="panel"><div class="table-responsive table-scroll"><table class="table mb-0"><thead><tr><th>Marca</th><th class="text-end">Meta R$</th><th class="text-end">Meta un.</th><th class="text-end">Soma pesos</th><th class="text-end">Peso × participação</th><th>Status</th><th>Publicação</th></tr></thead><tbody id="tabelaPlanejamento"></tbody></table></div></div></div></div>
+    </div>
+
+    <section id="planejadorMetas" class="container-fluid px-3 px-lg-4 pb-5 d-none">
+      <div class="d-flex flex-wrap justify-content-between align-items-end gap-3 mt-4">
+        <div><div class="eyebrow text-dark">Planejamento da competência</div><h2 id="tituloPlanejador" class="mb-0 fw-bold">Metas e pesos</h2></div>
+        <button class="btn btn-outline-dark btn-sm fw-bold" onclick="voltarAoDashboard()">Voltar ao painel</button>
+      </div>
+
+      <div id="avisoPlanejador" class="alert alert-warning mt-3 d-none mb-0"></div>
+
+      <div id="etapaMetas" class="planner-step">
+        <h3 class="section-title"><span class="planner-step-number">1</span>Metas por marca</h3>
+        <div class="panel">
+          <div class="panel-head"><div><h3 class="panel-title">Referência dos três últimos meses fechados</h3><p class="panel-subtitle">Informe a meta de unidades. A meta financeira é sugerida pelo ticket médio da marca e pode ser ajustada antes de salvar.</p></div></div>
+          <div class="table-responsive"><table class="table mb-0"><thead><tr><th>Marca</th><th class="text-end">Último mês fechado R$</th><th class="text-end">Último mês fechado un.</th><th class="text-end">Média R$ 3M</th><th class="text-end">Média un. 3M</th><th class="text-end">Ticket médio</th><th class="text-end">Meta de unidades</th><th class="text-end">Meta financeira</th></tr></thead><tbody id="tabelaMetasPlanejador"></tbody></table></div>
+          <div class="planner-actions mt-3"><button id="btnSalvarMetas" class="btn btn-dark btn-sm fw-bold" onclick="salvarMetasPlanejador()">Salvar metas e avançar</button></div>
+        </div>
+      </div>
+
+      <div id="etapaPesos" class="planner-step d-none">
+        <h3 class="section-title"><span class="planner-step-number">2</span>Pesos por loja</h3>
+        <div class="panel">
+          <div class="panel-head flex-wrap"><div><h3 class="panel-title">Distribuição da meta entre as lojas</h3><p id="subtituloPesosPlanejador" class="panel-subtitle"></p></div><div class="planner-actions"><button class="btn btn-outline-secondary btn-sm fw-bold" onclick="usarPesosPlanejador('ATUAL')">Usar pesos atuais</button><button class="btn btn-outline-dark btn-sm fw-bold" onclick="usarPesosPlanejador('SUGERIDO')">Usar pesos sugeridos</button></div></div>
+          <div class="row g-2 align-items-end mb-3"><div class="col-12 col-md-4"><label class="filter-label" for="marcaPlanejamento">Marca</label><select id="marcaPlanejamento" class="form-select" onchange="selecionarMarcaPlanejamento()"></select></div><div class="col-12 col-md-8"><div class="planner-summary"><div id="resumoPesosPlanejador">—</div><div id="statusRevisaoPesos"></div></div></div></div>
+          <div class="table-responsive"><table class="table mb-0"><thead><tr><th>Loja</th><th class="text-center">Ativar para a marca</th><th class="text-end">Participação média 3M</th><th class="text-end">Peso atual</th><th class="text-end">Peso sugerido</th><th class="text-end">Peso desejado</th><th class="text-end">Meta R$</th><th class="text-end">Meta un.</th></tr></thead><tbody id="tabelaPesosPlanejador"></tbody></table></div>
+          <div class="planner-actions mt-3"><button id="btnSalvarPesos" class="btn btn-dark btn-sm fw-bold" onclick="salvarPesosPlanejador()">Salvar pesos da marca</button><button id="btnSalvarTodosPesos" class="btn btn-outline-dark btn-sm fw-bold" onclick="salvarTodosPesosPlanejador()">Salvar pesos de todas as marcas</button></div>
+        </div>
+      </div>
+
+      <div id="etapaPublicacao" class="planner-step d-none">
+        <h3 class="section-title"><span class="planner-step-number">3</span>Revisão e publicação</h3>
+        <div class="panel"><div class="panel-head"><div><h3 class="panel-title">Planejamento pronto para publicação</h3><p class="panel-subtitle">A publicação libera as metas para os painéis operacional e gerencial da competência atual.</p></div></div><div id="resumoPublicacaoPlanejador" class="planner-summary mb-3">—</div><div class="planner-actions"><button class="btn btn-dark btn-sm fw-bold" onclick="publicarPlanejamentoDoPainel()">Validar e publicar planejamento</button></div></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="carregando" class="loading"><div class="spinner-border text-dark" role="status"></div></div>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script>
+    var CARGA = null;
+    var TOKEN = '';
+    var MODO_EVOLUCAO = 'FATURAMENTO';
+    var MODO_COMPARACAO = 'FATURAMENTO';
+    var MODO_META_REALIZADO = 'FATURAMENTO';
+    var MODO_COMPARATIVO_MENSAL = 'FATURAMENTO';
+    var ORDENACAO_LOJAS = { campo:'realizado', direcao:'desc', interagiu:false };
+    var ORDENACAO_MARCAS = { campo:'realizado', direcao:'desc', interagiu:false };
+    var GRAFICOS = {};
+    var PLANEJAMENTO_EDICAO = null;
+    var MESES = ['', 'Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    var CORES = ['#111827','#047857','#d97706','#2563eb','#dc2626','#7c3aed','#0891b2','#db2777','#65a30d','#1e3a8a','#92400e','#64748b'];
+
+    var ROTULOS_DADOS = {
+      id: 'rotulosDados',
+      afterDatasetsDraw: function(chart, args, opcoes) {
+        if (!opcoes || opcoes.display === false) return;
+        var ctx = chart.ctx;
+        var area = chart.chartArea || { left:0, right:chart.width, top:0, bottom:chart.height };
+        var ocupados = [];
+        function sobrepoe(a,b) { return a.esquerda < b.direita && a.direita > b.esquerda && a.topo < b.base && a.base > b.topo; }
+        ctx.save();
+        chart.data.datasets.forEach(function(dataset, indiceDataset) {
+          var meta = chart.getDatasetMeta(indiceDataset);
+          if (meta.hidden) return;
+          meta.data.forEach(function(elemento, indice) {
+            var valor = dataset.data[indice];
+            if (valor === null || valor === undefined || !isFinite(Number(valor))) return;
+            var rotulo = opcoes.formatter ? opcoes.formatter(Number(valor), indice, indiceDataset, chart) : String(valor);
+            if (!rotulo) return;
+            var posicao = elemento.tooltipPosition();
+            var tamanhoFonte = opcoes.fontSize || 10;
+            ctx.font = (opcoes.fontWeight || 700) + ' ' + tamanhoFonte + 'px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = opcoes.color || dataset.borderColor || '#222';
+            var deslocamento = typeof opcoes.offset === 'function' ? opcoes.offset(indiceDataset) : (opcoes.offset || 7);
+            var largura = ctx.measureText(rotulo).width;
+            var altura = tamanhoFonte + 4;
+            var x = Math.max(area.left + largura / 2 + 3, Math.min(posicao.x, area.right - largura / 2 - 3));
+            var yInicial = Math.max(area.top + altura / 2, Math.min(posicao.y - deslocamento, area.bottom - altura / 2));
+            var y = yInicial;
+            var caixa = null;
+            for (var tentativa = 0; tentativa < 10; tentativa++) {
+              if (tentativa > 0) {
+                var nivel = Math.ceil(tentativa / 2);
+                var sinalInicial = indiceDataset % 2 === 0 ? -1 : 1;
+                var sinal = tentativa % 2 === 1 ? sinalInicial : -sinalInicial;
+                y = Math.max(area.top + altura / 2, Math.min(yInicial + sinal * nivel * (altura + 3), area.bottom - altura / 2));
+              }
+              caixa = { esquerda:x-largura/2-3, direita:x+largura/2+3, topo:y-altura/2-2, base:y+altura/2+2 };
+              if (!ocupados.some(function(item){return sobrepoe(caixa,item);})) break;
+            }
+            ocupados.push(caixa);
+            ctx.lineJoin = 'round';
+            ctx.lineWidth = opcoes.strokeWidth || 3;
+            ctx.strokeStyle = opcoes.strokeColor || 'rgba(255,255,255,.95)';
+            ctx.strokeText(rotulo, x, y);
+            ctx.fillText(rotulo, x, y);
+          });
+        });
+        ctx.restore();
+      }
+    };
+    Chart.register(ROTULOS_DADOS);
+
+    document.addEventListener('DOMContentLoaded', iniciarPagina);
+    document.addEventListener('DOMContentLoaded', function() {
+      atualizarBarraFiltrosCompacta();
+      window.addEventListener('scroll', atualizarBarraFiltrosCompacta, { passive:true });
+      window.addEventListener('resize', atualizarBarraFiltrosCompacta);
+    });
+
+    function atualizarBarraFiltrosCompacta() {
+      var barra = document.querySelector('.filterbar');
+      if (!barra) return;
+      if (window.innerWidth <= 767) {
+        barra.classList.remove('compact');
+        return;
+      }
+      barra.classList.toggle('compact', window.scrollY > 80);
+    }
+
+    function iniciarPagina() {
+      // O login deve ficar disponível imediatamente. Não tentamos restaurar
+      // sessões antigas, pois o iframe do Apps Script pode manter um token
+      // inválido e deixar a página presa na camada de carregamento.
+      TOKEN = '';
+      exibirCarregamento(false);
+      document.getElementById('aplicacao').classList.add('d-none');
+      document.getElementById('login').classList.remove('d-none');
+      document.getElementById('btnLogin').disabled = false;
+      document.getElementById('formLogin').addEventListener('submit', enviarLogin);
+
+      google.script.run
+        .withSuccessHandler(function(url) {
+          document.getElementById('linkOperacionalLogin').href = url;
+          document.getElementById('linkOperacionalTopo').href = url;
+        })
+        .withFailureHandler(function(falha) {
+          console.error('Não foi possível obter a URL da aplicação.', falha);
+        })
+        .obterUrlAplicacao();
+    }
+
+    function enviarLogin(evento) {
+      evento.preventDefault();
+
+      var botao = document.getElementById('btnLogin');
+      var erro = document.getElementById('erroLogin');
+      var usuario = document.getElementById('loginUsuario').value.trim();
+      var senha = document.getElementById('loginSenha').value;
+
+      if (!usuario || !senha) {
+        erro.textContent = 'Informe o usuário e a senha.';
+        return;
+      }
+
+      botao.disabled = true;
+      botao.textContent = 'Autenticando...';
+      erro.textContent = '';
+      exibirCarregamento(true);
+
+      google.script.run
+        .withSuccessHandler(function(resposta) {
+          exibirCarregamento(false);
+          botao.disabled = false;
+          botao.textContent = 'Entrar';
+
+          if (!resposta || !resposta.autenticado) {
+            erro.textContent = resposta && resposta.mensagem
+              ? resposta.mensagem
+              : 'Usuário ou senha inválidos.';
+            return;
+          }
+
+          TOKEN = resposta.token;
+          document.getElementById('loginSenha').value = '';
+
+          try {
+            montarPainelComCarga(resposta.carga);
+          } catch (erroMontagem) {
+            TOKEN = '';
+            CARGA = null;
+            document.getElementById('aplicacao').classList.add('d-none');
+            document.getElementById('login').classList.remove('d-none');
+            erro.textContent = 'Erro ao montar o painel: ' + mensagemErro(erroMontagem);
+          }
+        })
+        .withFailureHandler(function(falha) {
+          exibirCarregamento(false);
+          botao.disabled = false;
+          botao.textContent = 'Entrar';
+          erro.textContent = mensagemErro(falha);
+        })
+        .autenticarECarregarGerencia(usuario, senha);
+    }
+
+    function montarPainelComCarga(carga) {
+      if (!carga || !carga.filtros || !carga.padroes || !Array.isArray(carga.linhas)) {
+        throw new Error('A carga gerencial retornou em formato inválido.');
+      }
+
+      CARGA = carga;
+      montarFiltros();
+      document.getElementById('login').classList.add('d-none');
+      document.getElementById('aplicacao').classList.remove('d-none');
+      renderizarTudo();
+    }
+
+    function carregarPainel() {
+      exibirCarregamento(true);
+      google.script.run
+        .withSuccessHandler(function(carga) {
+          // Libera a interface antes de montar filtros e gráficos. Assim,
+          // qualquer falha visual posterior não mantém uma camada bloqueando a tela.
+          exibirCarregamento(false);
+
+          try {
+            montarPainelComCarga(carga);
+          } catch (erroMontagem) {
+            CARGA = null;
+            TOKEN = '';
+            document.getElementById('aplicacao').classList.add('d-none');
+            document.getElementById('login').classList.remove('d-none');
+            document.getElementById('erroLogin').textContent =
+              'Erro ao montar o painel: ' + mensagemErro(erroMontagem);
+          }
+        })
+        .withFailureHandler(function(falha) {
+          exibirCarregamento(false);
+          TOKEN = '';
+          document.getElementById('aplicacao').classList.add('d-none');
+          document.getElementById('login').classList.remove('d-none');
+          document.getElementById('erroLogin').textContent = mensagemErro(falha);
+        })
+        .obterCargaGerencial(TOKEN);
+    }
+
+    function montarFiltros() {
+      var ano = document.getElementById('filtroAno');
+      ano.innerHTML = CARGA.filtros.anos.map(function(valor) { return '<option value="' + valor + '">' + valor + '</option>'; }).join('');
+      ano.value = String(CARGA.padroes.ano);
+      if (!ano.value && CARGA.filtros.anos.length) ano.value = CARGA.filtros.anos[0];
+      var marca = document.getElementById('filtroMarca');
+      marca.innerHTML = '<option value="TODAS">Todas as marcas</option>' + CARGA.filtros.marcas.map(function(valor) { return '<option value="' + escaparHtml(valor) + '">' + escaparHtml(valor) + '</option>'; }).join('');
+      montarFiltroLojas();
+      preencherPeriodos(CARGA.padroes.competencia);
+      montarComparadorMensal();
+    }
+
+    function preencherPeriodos(preferida) {
+      var ano = Number(document.getElementById('filtroAno').value);
+      var periodos = CARGA.filtros.competencias.filter(function(item) { return item.ano === ano; });
+      var select = document.getElementById('filtroPeriodo');
+      select.innerHTML = '<option value="ACUMULADO">Acumulado do ano</option>' + periodos.map(function(item) { return '<option value="' + item.competencia + '">' + escaparHtml(item.label) + (item.fechado ? ' · fechado' : ' · atual') + '</option>'; }).join('');
+      var desejada = periodos.some(function(item) { return item.competencia === preferida; }) ? preferida : (periodos.length ? periodos[0].competencia : 'ACUMULADO');
+      select.value = desejada;
+    }
+
+    function montarComparadorMensal() {
+      var fechadas = CARGA.filtros.competencias.filter(function(item) { return item.fechado; }).sort(function(a,b) { return b.competencia.localeCompare(a.competencia); });
+      var opcoes = fechadas.map(function(item) { return '<option value="' + item.competencia + '">' + escaparHtml(item.label) + '</option>'; }).join('');
+      var seletorA = document.getElementById('mesComparacaoA');
+      seletorA.innerHTML = opcoes;
+      if (fechadas.length) seletorA.value = fechadas[0].competencia;
+      atualizarMesComparado(false);
+    }
+
+    function atualizarMesComparado(renderizar) {
+      var competenciaA = document.getElementById('mesComparacaoA').value;
+      var seletorB = document.getElementById('mesComparacaoB');
+      var anteriorSelecionado = seletorB.value;
+      var anteriores = CARGA.filtros.competencias.filter(function(item) {
+        return item.fechado && item.competencia < competenciaA;
+      }).sort(function(a,b) { return b.competencia.localeCompare(a.competencia); });
+      seletorB.innerHTML = anteriores.map(function(item) {
+        return '<option value="' + item.competencia + '">' + escaparHtml(item.label) + '</option>';
+      }).join('');
+      seletorB.value = anteriores.some(function(item){return item.competencia===anteriorSelecionado;})
+        ? anteriorSelecionado
+        : (anteriores.length ? anteriores[0].competencia : '');
+      if (renderizar !== false) renderizarComparativoMensal();
+    }
+
+    function montarFiltroLojas() {
+      var menu = document.getElementById('menuLojas');
+      var html = '<div class="form-check mb-2"><input id="lojasTodas" class="form-check-input" type="checkbox" checked onchange="alternarTodasLojas()"><label class="form-check-label fw-bold" for="lojasTodas">Todas as lojas</label></div><hr class="my-2">';
+      CARGA.filtros.lojas.forEach(function(loja, indice) {
+        html += '<div class="form-check mb-2"><input class="form-check-input chk-loja-gerencial" type="checkbox" checked value="' + escaparHtml(loja.sigla) + '" id="lojaGerencial' + indice + '" onchange="lojasAlteradas()"><label class="form-check-label" for="lojaGerencial' + indice + '">' + escaparHtml(loja.nome) + '</label></div>';
+      });
+      menu.innerHTML = html;
+    }
+
+    function alterarAno() { preencherPeriodos(''); renderizarTudo(); }
+    function alternarTodasLojas() { var valor = document.getElementById('lojasTodas').checked; document.querySelectorAll('.chk-loja-gerencial').forEach(function(item) { item.checked = valor; }); lojasAlteradas(); }
+    function lojasAlteradas() {
+      var itens = Array.prototype.slice.call(document.querySelectorAll('.chk-loja-gerencial'));
+      var marcados = itens.filter(function(item) { return item.checked; });
+      document.getElementById('lojasTodas').checked = marcados.length === itens.length;
+      document.getElementById('textoLojas').textContent = !marcados.length
+        ? 'Nenhuma loja selecionada'
+        : (marcados.length === itens.length ? 'Todas as lojas' : (marcados.length === 1 ? nomeLoja(marcados[0].value) : marcados.length + ' lojas'));
+      renderizarTudo();
+    }
+
+    function restaurarFiltros() {
+      document.getElementById('filtroAno').value = String(CARGA.padroes.ano);
+      if (!document.getElementById('filtroAno').value && CARGA.filtros.anos.length) document.getElementById('filtroAno').value = CARGA.filtros.anos[0];
+      document.getElementById('filtroMarca').value = 'TODAS';
+      document.querySelectorAll('.chk-loja-gerencial').forEach(function(item) { item.checked = true; });
+      document.getElementById('lojasTodas').checked = true;
+      document.getElementById('textoLojas').textContent = 'Todas as lojas';
+      preencherPeriodos(CARGA.padroes.competencia);
+      montarComparadorMensal();
+      renderizarTudo();
+    }
+
+    function filtrosAtuais() {
+      return {
+        ano: Number(document.getElementById('filtroAno').value),
+        periodo: document.getElementById('filtroPeriodo').value,
+        marca: document.getElementById('filtroMarca').value,
+        lojas: Array.prototype.slice.call(document.querySelectorAll('.chk-loja-gerencial:checked')).map(function(item) { return item.value; })
+      };
+    }
+
+    function linhasBase(ignorarPeriodo) {
+      var filtros = filtrosAtuais();
+      return CARGA.linhas.filter(function(item) {
+        return item.ano === filtros.ano &&
+          (filtros.marca === 'TODAS' || item.marca === filtros.marca) &&
+          filtros.lojas.indexOf(item.loja) >= 0 &&
+          (ignorarPeriodo || filtros.periodo === 'ACUMULADO' || item.competencia === filtros.periodo);
+      });
+    }
+
+    function linhasHistoricasRecorte(marca, loja) {
+      var filtros = filtrosAtuais();
+      return CARGA.linhas.filter(function(item) {
+        return (marca || filtros.marca === 'TODAS' || item.marca === filtros.marca) &&
+          (!marca || item.marca === marca) &&
+          filtros.lojas.indexOf(item.loja) >= 0 &&
+          (!loja || item.loja === loja);
+      });
+    }
+
+    function resumir(linhas, acumulado) {
+      var realizado = soma(linhas, 'realizadoR');
+      var metasRPreenchidas = linhas.length > 0 && linhas.every(function(item) { return item.metaR !== null && item.metaR !== ''; });
+      var totalMetaR = metasRPreenchidas ? soma(linhas, 'metaR') : null;
+      var metaCompleta = metasRPreenchidas && totalMetaR > 0;
+      var meta = metaCompleta ? totalMetaR : null;
+      var realizadoQtd = soma(linhas, 'realizadoQtd');
+      var metasQtdPreenchidas = linhas.length > 0 && linhas.every(function(item) { return item.metaQtd !== null && item.metaQtd !== ''; });
+      var totalMetaQtd = metasQtdPreenchidas ? soma(linhas, 'metaQtd') : null;
+      var metaQtdCompleta = metasQtdPreenchidas && totalMetaQtd > 0;
+      var metaQtd = metaQtdCompleta ? totalMetaQtd : null;
+      var projecao = null, projecaoQtd = null;
+      var temAtual = linhas.some(function(item) { return !item.periodoFechado; });
+      if (temAtual) {
+        projecao = linhas.reduce(function(total, item) {
+          if (item.periodoFechado || !acumulado) return total + (item.periodoFechado ? numero(item.realizadoR) : numero(item.tendenciaR));
+          return total + numero(item.tendenciaR);
+        }, 0);
+        projecaoQtd = linhas.reduce(function(total, item) {
+          if (item.periodoFechado || !acumulado) return total + (item.periodoFechado ? numero(item.realizadoQtd) : numero(item.tendenciaQtd));
+          return total + numero(item.tendenciaQtd);
+        }, 0);
+      }
+
+      var temCorteAtual = numero(CARGA && CARGA.padroes && CARGA.padroes.diaReferencia) > 0;
+      var desvioR = !metaCompleta
+        ? null
+        : (temAtual ? (temCorteAtual && projecao !== null ? projecao - meta : null) : realizado - meta);
+      var desvioUn = !metaQtdCompleta
+        ? null
+        : (temAtual ? (temCorteAtual && projecaoQtd !== null ? projecaoQtd - metaQtd : null) : realizadoQtd - metaQtd);
+
+      var linhasFechadas = linhas.filter(function(item) { return item.periodoFechado; });
+      var desvioFechadoR = metaCompleta && linhasFechadas.length
+        ? soma(linhasFechadas, 'realizadoR') - soma(linhasFechadas, 'metaR')
+        : null;
+      var desvioFechadoQtd = metaQtdCompleta && linhasFechadas.length
+        ? soma(linhasFechadas, 'realizadoQtd') - soma(linhasFechadas, 'metaQtd')
+        : null;
+
+      return {
+        realizado: realizado,
+        meta: meta,
+        metaCompleta: metaCompleta,
+        atingimento: meta && meta > 0 ? realizado / meta : null,
+        desvio: desvioR,
+        desvioFechadoR: desvioFechadoR,
+        saldoMetaR: metaCompleta ? meta - realizado : null,
+        realizadoQtd: realizadoQtd,
+        metaQtd: metaQtd,
+        metaQtdCompleta: metaQtdCompleta,
+        atingimentoQtd: metaQtd && metaQtd > 0 ? realizadoQtd / metaQtd : null,
+        desvioQtd: desvioUn,
+        desvioFechadoQtd: desvioFechadoQtd,
+        saldoMetaQtd: metaQtdCompleta ? metaQtd - realizadoQtd : null,
+        projecao: projecao,
+        projecaoQtd: projecaoQtd,
+        projecaoMeta: meta && meta > 0 && projecao !== null ? projecao / meta : null,
+        temAtual: temAtual,
+        temCorteAtual: temCorteAtual
+      };
+    }
+
+    function competenciaReferenciaTendencia() {
+      var filtros = filtrosAtuais();
+      if (filtros.periodo !== 'ACUMULADO') return filtros.periodo;
+      var candidatas = CARGA.filtros.competencias.filter(function(item) { return item.ano <= filtros.ano; });
+      return candidatas.length ? candidatas.sort(function(a,b){return b.competencia.localeCompare(a.competencia);})[0].competencia : '';
+    }
+
+    function calcularTendenciaHistorica(linhas) {
+      var referencia = competenciaReferenciaTendencia();
+      var fechadas = linhas.filter(function(item) {
+        return item.periodoFechado && (!referencia || item.competencia <= referencia);
+      });
+      var grupos = agrupar(fechadas, function(item) { return item.competencia; });
+      var competencias = Object.keys(grupos).sort().reverse().slice(0, 6);
+      if (competencias.length < 6) return { disponivel:false, competencias:competencias };
+      var atuais = competencias.slice(0, 3);
+      var anteriores = competencias.slice(3, 6);
+      var mediaAtual = atuais.reduce(function(total, comp){return total + soma(grupos[comp], 'realizadoR');}, 0) / 3;
+      var mediaAnterior = anteriores.reduce(function(total, comp){return total + soma(grupos[comp], 'realizadoR');}, 0) / 3;
+      var variacao = mediaAnterior ? mediaAtual / mediaAnterior - 1 : null;
+      return { disponivel:variacao !== null, mediaAtual:mediaAtual, mediaAnterior:mediaAnterior, variacao:variacao, atuais:atuais.reverse(), anteriores:anteriores.reverse() };
+    }
+
+    function classificarTendenciaHistorica(variacao) {
+      if (variacao === null || variacao === undefined) return { texto:'Dados insuficientes', classe:'muted' };
+      if (variacao < numero(CARGA.padroes.faixaMin)) return { texto:'Queda', classe:'bad' };
+      if (variacao > numero(CARGA.padroes.faixaMax)) return { texto:'Crescimento', classe:'good' };
+      return { texto:'Estável', classe:'stable' };
+    }
+
+    function renderizarTudo() {
+      if (!CARGA) return;
+      var linhas = linhasBase(false);
+      var acumulado = filtrosAtuais().periodo === 'ACUMULADO';
+      renderizarKpis(linhas, acumulado);
+      renderizarRitmoAtual(linhas);
+      renderizarTendenciaHistorica();
+      renderizarEvolucao(linhasBase(true));
+      renderizarMetaRealizado(linhasBase(true));
+      renderizarComparativoMensal();
+      renderizarLojas(linhas, acumulado);
+      renderizarDistribuicao(linhas);
+      renderizarComparacao(linhasBase(true));
+      renderizarMarcas(linhas, acumulado);
+      renderizarRepresentatividade(linhas);
+      renderizarPlanejamento();
+    }
+
+    function renderizarKpis(linhas, acumulado) {
+      var resumo = resumir(linhas, acumulado);
+      var filtros = filtrosAtuais();
+      var periodo = filtros.periodo === 'ACUMULADO' ? 'Acumulado de ' + filtros.ano : labelCompetencia(filtros.periodo);
+      var incluiAtual = linhas.some(function(item) { return !item.periodoFechado; });
+      document.getElementById('contextoPeriodo').textContent = periodo + ' · ' + filtros.lojas.length + ' loja(s)' + (incluiAtual && CARGA.padroes.dataReferencia ? ' · corte em ' + CARGA.padroes.dataReferencia : '');
+      definirTexto('kpiRealizado', moeda(resumo.realizado));
+      var lojas = Object.keys(agrupar(linhas,function(item){return item.loja;})).length;
+      var marcas = Object.keys(agrupar(linhas,function(item){return item.marca;})).length;
+      var notaRealizado = linhas.length ? lojas + ' loja(s) e ' + marcas + ' marca(s)' : 'Sem dados para os filtros';
+      var comparacaoAnterior = calcularComparacaoMesAnterior(resumo.realizado);
+      if (comparacaoAnterior !== null) notaRealizado += ' · ' + percentualComSinal(comparacaoAnterior) + ' vs mês anterior';
+      definirTexto('notaRealizado', notaRealizado);
+      definirTexto('kpiMeta', resumo.metaCompleta ? moeda(resumo.meta) : 'Meta pendente', resumo.metaCompleta ? '' : 'meta-pendente');
+      definirTexto('notaMeta', resumo.metaCompleta ? 'Meta cadastrada para todo o recorte' : 'Há metas financeiras não publicadas');
+      definirTexto('kpiAtingimento', resumo.atingimento === null ? 'Meta pendente' : percentual(resumo.atingimento), resumo.atingimento === null ? 'meta-pendente' : '');
+      definirTexto('notaAtingimento', resumo.atingimento === null ? 'Disponível após a publicação das metas' : 'Realizado ÷ meta financeira');
+
+      var textoDesvio = !resumo.metaCompleta
+        ? 'Meta pendente'
+        : (resumo.desvio === null ? 'Aguardando corte' : moedaComSinal(resumo.desvio));
+      var classeDesvio = !resumo.metaCompleta
+        ? 'meta-pendente'
+        : (resumo.desvio === null ? 'stable' : (resumo.desvio >= 0 ? 'good' : 'bad'));
+      var notaDesvio = !resumo.metaCompleta
+        ? 'Disponível após publicação'
+        : (resumo.temAtual
+            ? (acumulado && resumo.desvioFechadoR !== null
+                ? 'Desvio projetado · consolidado fechado: ' + moedaComSinal(resumo.desvioFechadoR)
+                : 'Desvio projetado · ' + (resumo.saldoMetaR > 0 ? 'faltam ' + moeda(resumo.saldoMetaR) : 'meta superada em ' + moedaComSinal(-resumo.saldoMetaR)))
+            : 'Realizado menos meta financeira');
+
+      definirTexto('kpiDesvio', textoDesvio, classeDesvio);
+      definirTexto('notaDesvio', notaDesvio);
+      definirTexto('kpiUnidades', quantidade(resumo.realizadoQtd));
+      definirTexto('notaUnidades', 'Unidades vendidas no recorte');
+      definirTexto('kpiMetaUnidades', resumo.metaQtdCompleta ? quantidade(resumo.metaQtd) : 'Meta pendente', resumo.metaQtdCompleta ? '' : 'meta-pendente');
+      definirTexto('notaMetaUnidades', resumo.metaQtdCompleta ? 'Meta cadastrada para todo o recorte' : 'Há metas de unidades não publicadas');
+      definirTexto('kpiAtingimentoUnidades', resumo.atingimentoQtd === null ? 'Meta pendente' : percentual(resumo.atingimentoQtd), resumo.atingimentoQtd === null ? 'meta-pendente' : '');
+
+      var notaAtingUn = resumo.atingimentoQtd === null
+        ? 'Disponível após publicação'
+        : (resumo.temAtual
+            ? (acumulado && resumo.desvioFechadoQtd !== null
+                ? 'Consolidado fechado: ' + moedaComSinal(resumo.desvioFechadoQtd, true) + ' un.' +
+                  (resumo.desvioQtd !== null ? ' · proj.: ' + moedaComSinal(resumo.desvioQtd, true) + ' un.' : '')
+                : (resumo.saldoMetaQtd > 0 ? 'Faltam ' + quantidade(resumo.saldoMetaQtd) + ' un.' : 'Meta superada em +' + quantidade(-resumo.saldoMetaQtd) + ' un.') +
+                  (resumo.desvioQtd !== null ? ' · desvio proj.: ' + moedaComSinal(resumo.desvioQtd, true) + ' un.' : ''))
+            : moedaComSinal(resumo.desvioQtd, true) + ' unidade(s) de desvio');
+      definirTexto('notaAtingimentoUnidades', notaAtingUn);
+
+      definirTexto('kpiProjecao', resumo.temAtual ? moeda(resumo.projecao) : 'Mês fechado');
+      definirTexto('notaProjecao', resumo.temAtual ? textoProjecao(resumo.projecaoMeta, acumulado) : 'Exibida somente quando há competência aberta');
+    }
+
+    function renderizarRitmoAtual(linhas) {
+      var filtros = filtrosAtuais();
+      var secao = document.getElementById('secaoRitmoAtual');
+      var cicloAtualSelecionado = filtros.periodo === CARGA.padroes.competencia &&
+        linhas.some(function(item) { return !item.periodoFechado; });
+      secao.classList.toggle('d-none', !cicloAtualSelecionado);
+      if (!cicloAtualSelecionado) return;
+
+      var resumo = resumir(linhas, false);
+      var diaReferencia = Math.max(numero(CARGA.padroes.diaReferencia), 0);
+      var diasNoMes = Math.max(numero(CARGA.padroes.diasNoMes), 0);
+      var diasRestantes = Math.max(diasNoMes - diaReferencia, 0);
+      var mediaRealizadaR = diaReferencia > 0 ? resumo.realizado / diaReferencia : null;
+      var mediaRealizadaQtd = diaReferencia > 0 ? resumo.realizadoQtd / diaReferencia : null;
+      var metaDiariaR = resumo.metaCompleta && diasNoMes > 0 ? resumo.meta / diasNoMes : null;
+      var metaDiariaQtd = resumo.metaQtdCompleta && diasNoMes > 0 ? resumo.metaQtd / diasNoMes : null;
+      var ritmoR = resumo.metaCompleta && diasRestantes > 0 ? Math.max(resumo.meta - resumo.realizado, 0) / diasRestantes : null;
+      var ritmoQtd = resumo.metaQtdCompleta && diasRestantes > 0 ? Math.max(resumo.metaQtd - resumo.realizadoQtd, 0) / diasRestantes : null;
+      var notaPrazo = diaReferencia > 0
+        ? 'Corte no dia ' + diaReferencia + ' · ' + diasRestantes + ' dia(s) restante(s)'
+        : 'Aguardando a data de corte';
+
+      definirTexto('kpiMetaDiariaR', metaDiariaR === null ? 'Meta pendente' : moeda(metaDiariaR), metaDiariaR === null ? 'meta-pendente' : '');
+      definirTexto('notaMetaDiariaR', mediaRealizadaR === null ? notaPrazo : 'Realizado médio: ' + moeda(mediaRealizadaR) + '/dia');
+      definirTexto('kpiRitmoDiarioR', ritmoR === null ? (resumo.metaCompleta && diasRestantes === 0 ? 'Ciclo encerrado' : 'Meta pendente') : moeda(ritmoR), ritmoR === null && !resumo.metaCompleta ? 'meta-pendente' : '');
+      definirTexto('notaRitmoDiarioR', notaPrazo);
+      definirTexto('kpiMetaDiariaQtd', metaDiariaQtd === null ? 'Meta pendente' : quantidadeDecimal(metaDiariaQtd), metaDiariaQtd === null ? 'meta-pendente' : '');
+      definirTexto('notaMetaDiariaQtd', mediaRealizadaQtd === null ? notaPrazo : 'Realizado médio: ' + quantidadeDecimal(mediaRealizadaQtd) + ' un./dia');
+      definirTexto('kpiRitmoDiarioQtd', ritmoQtd === null ? (resumo.metaQtdCompleta && diasRestantes === 0 ? 'Ciclo encerrado' : 'Meta pendente') : quantidadeDecimal(ritmoQtd), ritmoQtd === null && !resumo.metaQtdCompleta ? 'meta-pendente' : '');
+      definirTexto('notaRitmoDiarioQtd', notaPrazo);
+    }
+
+    function calcularComparacaoMesAnterior(realizadoAtual) {
+      var filtros=filtrosAtuais();
+      if (filtros.periodo==='ACUMULADO') return null;
+      var competencias=CARGA.filtros.competencias.map(function(item){return item.competencia;}).filter(function(comp){return comp<filtros.periodo;}).sort().reverse();
+      if (!competencias.length) return null;
+      var anterior=CARGA.linhas.filter(function(item){return item.competencia===competencias[0]&&(filtros.marca==='TODAS'||item.marca===filtros.marca)&&filtros.lojas.indexOf(item.loja)>=0;});
+      var valor=soma(anterior,'realizadoR');
+      return valor>0?numero(realizadoAtual)/valor-1:null;
+    }
+
+    function renderizarTendenciaHistorica() {
+      var tendencia = calcularTendenciaHistorica(linhasHistoricasRecorte());
+      var status = classificarTendenciaHistorica(tendencia.disponivel ? tendencia.variacao : null);
+      var badge = document.getElementById('statusTendenciaHistorica');
+      badge.className = 'status ' + status.classe;
+      badge.textContent = status.texto;
+      definirTexto('media3Atual', tendencia.disponivel ? moeda(tendencia.mediaAtual) : 'Dados insuficientes');
+      definirTexto('media3Anterior', tendencia.disponivel ? moeda(tendencia.mediaAnterior) : 'Dados insuficientes');
+      definirTexto('variacaoTendenciaHistorica', tendencia.disponivel ? percentualComSinal(tendencia.variacao) : '—', tendencia.disponivel ? status.classe : '');
+      definirTexto('periodos3Atual', tendencia.disponivel ? tendencia.atuais.map(labelCompetencia).join(' · ') : 'São necessários 6 meses fechados');
+      definirTexto('periodos3Anterior', tendencia.disponivel ? tendencia.anteriores.map(labelCompetencia).join(' · ') : '');
+    }
+
+    function renderizarEvolucao(linhas) {
+      var fechadas = linhas.filter(function(item) { return item.periodoFechado; });
+      var grupos = agrupar(fechadas, function(item) { return item.competencia; });
+      var competencias = Object.keys(grupos).sort();
+      var valores = competencias.map(function(comp) {
+        var resumo = resumir(grupos[comp], false);
+        if (MODO_EVOLUCAO === 'UNIDADES') return resumo.realizadoQtd;
+        if (MODO_EVOLUCAO === 'ATINGIMENTO') return resumo.atingimento === null ? null : resumo.atingimento * 100;
+        return resumo.realizado;
+      });
+      var tipo = MODO_EVOLUCAO === 'ATINGIMENTO' ? 'percent' : (MODO_EVOLUCAO === 'UNIDADES' ? 'quantity' : 'money');
+      destruirGrafico('evolucao');
+      GRAFICOS.evolucao = new Chart(document.getElementById('graficoEvolucao'), {
+        type:'line',
+        data:{ labels:competencias.map(rotuloCompetenciaGrafico), datasets:[{ label:rotuloModo(MODO_EVOLUCAO), data:valores, borderColor:'#111', backgroundColor:'rgba(17,17,17,.09)', fill:true, tension:.25, pointRadius:4, spanGaps:false }] },
+        options:opcoesGrafico(tipo, false, true)
+      });
+    }
+
+    function mudarModoEvolucao(modo) {
+      MODO_EVOLUCAO = modo;
+      document.getElementById('modoFaturamento').classList.toggle('active', modo === 'FATURAMENTO');
+      document.getElementById('modoAtingimento').classList.toggle('active', modo === 'ATINGIMENTO');
+      document.getElementById('modoUnidades').classList.toggle('active', modo === 'UNIDADES');
+      renderizarEvolucao(linhasBase(true));
+    }
+
+    function renderizarMetaRealizado(linhas) {
+      var fechadas = linhas.filter(function(item) { return item.periodoFechado; });
+      var grupos = agrupar(fechadas, function(item) { return item.competencia; });
+      var competencias = Object.keys(grupos).sort();
+      var emUnidades = MODO_META_REALIZADO === 'UNIDADES';
+      var realizados = [];
+      var metas = [];
+      competencias.forEach(function(comp) {
+        var resumo = resumir(grupos[comp], false);
+        realizados.push(emUnidades ? resumo.realizadoQtd : resumo.realizado);
+        metas.push(emUnidades ? (resumo.metaQtdCompleta ? resumo.metaQtd : null) : (resumo.metaCompleta ? resumo.meta : null));
+      });
+      definirTexto(
+        'tituloMetaRealizado',
+        emUnidades ? 'Meta em unidades e unidades realizadas' : 'Meta financeira e faturamento realizado'
+      );
+      destruirGrafico('metaRealizado');
+      GRAFICOS.metaRealizado = new Chart(document.getElementById('graficoMetaRealizado'), {
+        type:'line',
+        data:{
+          labels:competencias.map(rotuloCompetenciaGrafico),
+          datasets:[
+            { label:'Meta', data:metas, borderColor:'#b54708', backgroundColor:'#b54708', tension:.2, pointRadius:4, spanGaps:false },
+            { label:'Realizado', data:realizados, borderColor:'#111111', backgroundColor:'#111111', tension:.2, pointRadius:4, spanGaps:false }
+          ]
+        },
+        options:opcoesGrafico(emUnidades ? 'quantity' : 'money', true, true)
+      });
+    }
+
+    function mudarModoMetaRealizado(modo) {
+      MODO_META_REALIZADO = modo;
+      document.getElementById('metaRealizadoFaturamento').classList.toggle('active', modo === 'FATURAMENTO');
+      document.getElementById('metaRealizadoUnidades').classList.toggle('active', modo === 'UNIDADES');
+      renderizarMetaRealizado(linhasBase(true));
+    }
+
+    function linhasDoComparativo(competencia) {
+      var filtros = filtrosAtuais();
+      return CARGA.linhas.filter(function(item) {
+        return item.competencia === competencia && item.periodoFechado &&
+          (filtros.marca === 'TODAS' || item.marca === filtros.marca) &&
+          filtros.lojas.indexOf(item.loja) >= 0;
+      });
+    }
+
+    function mudarModoComparativoMensal(modo) {
+      MODO_COMPARATIVO_MENSAL = modo;
+      document.getElementById('comparativoMensalFaturamento').classList.toggle('active', modo === 'FATURAMENTO');
+      document.getElementById('comparativoMensalUnidades').classList.toggle('active', modo === 'UNIDADES');
+      renderizarComparativoMensal();
+    }
+
+    function renderizarComparativoMensal() {
+      if (!CARGA) return;
+      var seletorA = document.getElementById('mesComparacaoA');
+      var seletorB = document.getElementById('mesComparacaoB');
+      var competenciaA = seletorA.value;
+      var competenciaB = seletorB.value;
+      var aviso = document.getElementById('avisoComparacaoMensal');
+      var conteudo = document.getElementById('conteudoComparacaoMensal');
+      destruirGrafico('comparativoMensal');
+
+      if (!competenciaA || !competenciaB) {
+        aviso.textContent = 'São necessárias pelo menos duas competências fechadas para realizar a comparação.';
+        aviso.classList.remove('d-none');
+        conteudo.classList.add('d-none');
+        return;
+      }
+      if (competenciaB >= competenciaA) {
+        aviso.textContent = 'O mês comparado deve ser anterior ao mês analisado.';
+        aviso.classList.remove('d-none');
+        conteudo.classList.add('d-none');
+        return;
+      }
+
+      aviso.classList.add('d-none');
+      conteudo.classList.remove('d-none');
+      var resumoA = resumir(linhasDoComparativo(competenciaA), false);
+      var resumoB = resumir(linhasDoComparativo(competenciaB), false);
+      var labelA = labelCompetencia(competenciaA);
+      var labelB = labelCompetencia(competenciaB);
+      var emUnidades = MODO_COMPARATIVO_MENSAL === 'UNIDADES';
+
+      var realizadoA = emUnidades ? resumoA.realizadoQtd : resumoA.realizado;
+      var realizadoB = emUnidades ? resumoB.realizadoQtd : resumoB.realizado;
+      var metaA = emUnidades ? (resumoA.metaQtdCompleta ? resumoA.metaQtd : null) : (resumoA.metaCompleta ? resumoA.meta : null);
+      var metaB = emUnidades ? (resumoB.metaQtdCompleta ? resumoB.metaQtd : null) : (resumoB.metaCompleta ? resumoB.meta : null);
+      var atingA = emUnidades ? resumoA.atingimentoQtd : resumoA.atingimento;
+      var atingB = emUnidades ? resumoB.atingimentoQtd : resumoB.atingimento;
+
+      var variacaoValor = realizadoB > 0 ? realizadoA / realizadoB - 1 : null;
+      var diferencaValor = realizadoA - realizadoB;
+      var variacaoAtingimento = atingA !== null && atingB !== null ? atingA - atingB : null;
+
+      definirTexto('rotuloComparacaoA', labelA);
+      definirTexto('rotuloComparacaoB', labelB);
+      definirTexto('rotuloVariacaoComparacao', emUnidades ? 'Variação em unidades' : 'Variação do faturamento');
+      definirTexto('rotuloVariacaoAtingimento', emUnidades ? 'Variação ating. un.' : 'Variação do atingimento');
+
+      definirTexto('kpiComparacaoA', emUnidades ? quantidade(realizadoA) + ' un.' : moeda(realizadoA));
+      definirTexto(
+        'notaComparacaoA',
+        atingA === null
+          ? 'Meta pendente'
+          : 'Meta: ' + (emUnidades ? quantidade(metaA) + ' un.' : moeda(metaA)) + ' · atingimento: ' + percentual(atingA)
+      );
+      definirTexto('kpiComparacaoB', emUnidades ? quantidade(realizadoB) + ' un.' : moeda(realizadoB));
+      definirTexto(
+        'notaComparacaoB',
+        atingB === null
+          ? 'Meta pendente'
+          : 'Meta: ' + (emUnidades ? quantidade(metaB) + ' un.' : moeda(metaB)) + ' · atingimento: ' + percentual(atingB)
+      );
+      definirTexto(
+        'kpiVariacaoFaturamento',
+        variacaoValor === null ? 'Sem base' : percentualComSinal(variacaoValor),
+        variacaoValor === null ? 'stable' : (variacaoValor >= 0 ? 'good' : 'bad')
+      );
+      definirTexto(
+        'notaVariacaoFaturamento',
+        (emUnidades ? moedaComSinal(diferencaValor, true) + ' un.' : moedaComSinal(diferencaValor)) + ' em relação a ' + labelB
+      );
+      definirTexto(
+        'kpiVariacaoAtingimento',
+        variacaoAtingimento === null ? 'Meta pendente' : pontosPercentuaisComSinal(variacaoAtingimento),
+        variacaoAtingimento === null ? 'meta-pendente' : (variacaoAtingimento >= 0 ? 'good' : 'bad')
+      );
+      definirTexto(
+        'notaVariacaoAtingimento',
+        variacaoAtingimento === null ? 'Disponível quando os dois meses possuem meta' : percentual(atingA) + ' contra ' + percentual(atingB)
+      );
+
+      GRAFICOS.comparativoMensal = new Chart(document.getElementById('graficoComparativoMensal'), {
+        type:'bar',
+        data:{
+          labels:[labelB, labelA],
+          datasets:[
+            { label:'Meta', data:[metaB, metaA], backgroundColor:'#d97706', borderColor:'#b54708', borderWidth:1 },
+            { label:'Realizado', data:[realizadoB, realizadoA], backgroundColor:'#171717', borderColor:'#171717', borderWidth:1 }
+          ]
+        },
+        options:opcoesGrafico(emUnidades ? 'quantity' : 'money', true, true)
+      });
+    }
+
+    function renderizarLojas(linhas, acumulado) {
+      var grupos = agrupar(linhas, function(item) { return item.loja; });
+      var registros = Object.keys(grupos).map(function(loja) {
+        var resumo = resumir(grupos[loja], acumulado);
+        var tendencia = calcularTendenciaHistorica(linhasHistoricasRecorte(null, loja));
+        var status = classificarTendenciaHistorica(tendencia.disponivel ? tendencia.variacao : null);
+        return { loja:loja, resumo:resumo, tendencia:tendencia, status:status };
+      });
+      registros.sort(function(a,b) {
+        var valoresA = { realizado:a.resumo.realizado, atingimento:a.resumo.atingimento, unidades:a.resumo.realizadoQtd, atingimentoQtd:a.resumo.atingimentoQtd, desvio:a.resumo.desvio, tendencia:a.tendencia.disponivel ? a.tendencia.variacao : null };
+        var valoresB = { realizado:b.resumo.realizado, atingimento:b.resumo.atingimento, unidades:b.resumo.realizadoQtd, atingimentoQtd:b.resumo.atingimentoQtd, desvio:b.resumo.desvio, tendencia:b.tendencia.disponivel ? b.tendencia.variacao : null };
+        return compararOrdenacao(valoresA[ORDENACAO_LOJAS.campo], valoresB[ORDENACAO_LOJAS.campo], ORDENACAO_LOJAS.direcao) || nomeLoja(a.loja).localeCompare(nomeLoja(b.loja),'pt-BR');
+      });
+      atualizarIndicadoresOrdenacao('Loja', ORDENACAO_LOJAS);
+      var html = registros.map(function(registro, indice) {
+        var loja = registro.loja;
+        var resumo = registro.resumo;
+        var tendencia = registro.tendencia;
+        var status = registro.status;
+        var classeDesvio = resumo.desvio === null ? 'text-secondary' : (resumo.desvio < 0 ? 'text-danger' : 'text-success');
+        return '<tr><td><span class="rank">' + (indice + 1) + '</span></td><td><strong>' + escaparHtml(nomeLoja(loja)) + '</strong><div class="text-secondary">' + escaparHtml(loja) + '</div></td><td class="text-end">' + moeda(resumo.realizado) + '</td><td class="text-end">' + (resumo.atingimento === null ? '—' : percentual(resumo.atingimento)) + '</td><td class="text-end">' + quantidade(resumo.realizadoQtd) + '</td><td class="text-end">' + (resumo.atingimentoQtd === null ? '—' : percentual(resumo.atingimentoQtd)) + '</td><td class="text-end ' + classeDesvio + '">' + (resumo.desvio === null ? '—' : moedaComSinal(resumo.desvio)) + '</td><td class="text-end"><span class="status ' + status.classe + '">' + status.texto + (tendencia.disponivel ? ' ' + percentualComSinal(tendencia.variacao) : '') + '</span></td></tr>';
+      }).join('');
+      document.getElementById('tabelaLojas').innerHTML = html || '<tr><td colspan="8" class="empty">Sem dados para os filtros selecionados.</td></tr>';
+    }
+
+    function ordenarLojas(campo) {
+      ORDENACAO_LOJAS = proximaOrdenacao(ORDENACAO_LOJAS, campo);
+      renderizarLojas(linhasBase(false), filtrosAtuais().periodo === 'ACUMULADO');
+    }
+
+    function renderizarDistribuicao(linhas) {
+      var grupos = agrupar(linhas, function(item) { return item.loja; });
+      var chaves = Object.keys(grupos).sort(function(a,b) {
+        return soma(grupos[b], 'realizadoR') - soma(grupos[a], 'realizadoR');
+      });
+      var valores = chaves.map(function(loja) {
+        return soma(grupos[loja], 'realizadoR');
+      });
+      var total = valores.reduce(function(acumulado, valor) {
+        return acumulado + numero(valor);
+      }, 0);
+      var coresDistribuicao = ['#111827','#047857','#d97706','#2563eb','#dc2626','#7c3aed','#0891b2','#db2777','#65a30d','#1e3a8a','#92400e','#64748b'];
+
+      destruirGrafico('distribuicao');
+      GRAFICOS.distribuicao = new Chart(document.getElementById('graficoDistribuicao'), {
+        type:'doughnut',
+        data:{
+          labels:chaves.map(nomeLoja),
+          datasets:[{
+            data:valores,
+            backgroundColor:chaves.map(function(_, indice) { return coresDistribuicao[indice % coresDistribuicao.length]; }),
+            borderWidth:3,
+            borderColor:'#fff',
+            hoverBorderColor:'#fff',
+            hoverBorderWidth:4,
+            hoverOffset:8
+          }]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          radius:'94%',
+          cutout:'56%',
+          animation:{ duration:450 },
+          layout:{ padding:{ top:14, right:16, bottom:4, left:16 } },
+          plugins:{
+            legend:{
+              display:true,
+              position:'bottom',
+              align:'center',
+              labels:{
+                color:'#111827',
+                boxWidth:12,
+                boxHeight:12,
+                padding:12,
+                font:{ size:11, weight:'bold' },
+                generateLabels:function(chart) {
+                  var dados = chart.data;
+                  var dataset = dados.datasets[0];
+                  return dados.labels.map(function(rotulo, indice) {
+                    var valor = numero(dataset.data[indice]);
+                    var participacao = total ? valor / total : 0;
+                    return {
+                      text:rotulo,
+                      fillStyle:dataset.backgroundColor[indice],
+                      strokeStyle:'#fff',
+                      lineWidth:1,
+                      hidden:!chart.getDataVisibility(indice),
+                      index:indice
+                    };
+                  });
+                }
+              }
+            },
+            tooltip:{
+              callbacks:{
+                label:function(ctx) {
+                  var valor = numero(ctx.raw);
+                  return ' ' + moeda(valor) + ' · ' + percentual(total ? valor / total : 0);
+                }
+              }
+            },
+            rotulosDados:{
+              display:true,
+              color:'#111827',
+              fontSize:11,
+              fontWeight:800,
+              strokeColor:'#fff',
+              strokeWidth:4,
+              offset:-2,
+              formatter:function(valor) {
+                var parte = total ? numero(valor) / total : 0;
+                return parte >= 0.035 ? percentual(parte) : '';
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function renderizarComparacao(linhas) {
+      var filtros = filtrosAtuais();
+      var todas = document.getElementById('lojasTodas').checked;
+      var mostrar = !todas && filtros.lojas.length >= 2 && filtros.lojas.length <= 5;
+      document.getElementById('vazioComparacao').classList.toggle('d-none', mostrar);
+      document.getElementById('caixaComparacao').classList.toggle('d-none', !mostrar);
+      destruirGrafico('comparacao');
+      if (!mostrar) {
+        document.getElementById('subtituloComparacao').textContent = filtros.lojas.length > 5 && !todas ? 'Há mais de cinco lojas selecionadas.' : 'Selecione de duas a cinco lojas para comparar.';
+        return;
+      }
+      var fechadas = linhas.filter(function(item){return item.periodoFechado;});
+      var competencias = Object.keys(agrupar(fechadas, function(item){return item.competencia;})).sort();
+      var gruposLoja = agrupar(fechadas, function(item){return item.loja;});
+      var datasets = filtros.lojas.filter(function(loja){return gruposLoja[loja];}).map(function(loja,indice){
+        var porMes = agrupar(gruposLoja[loja], function(item){return item.competencia;});
+        return { label:nomeLoja(loja), data:competencias.map(function(comp){ var r=porMes[comp]?resumir(porMes[comp],false):resumir([],false); if(MODO_COMPARACAO==='UNIDADES')return r.realizadoQtd; if(MODO_COMPARACAO==='ATINGIMENTO')return r.atingimento===null?null:r.atingimento*100; return r.realizado;}), borderColor:CORES[indice % CORES.length], backgroundColor:CORES[indice % CORES.length], tension:.22, pointRadius:3 };
+      });
+      var tipo = MODO_COMPARACAO === 'ATINGIMENTO' ? 'percent' : (MODO_COMPARACAO === 'UNIDADES' ? 'quantity' : 'money');
+      document.getElementById('subtituloComparacao').textContent = datasets.length + ' lojas · ' + rotuloModo(MODO_COMPARACAO).toLowerCase() + ' · somente meses fechados.';
+      GRAFICOS.comparacao = new Chart(document.getElementById('graficoComparacao'), { type:'line', data:{labels:competencias.map(rotuloCompetenciaGrafico),datasets:datasets}, options:opcoesGrafico(tipo, true, true) });
+    }
+
+    function mudarModoComparacao(modo) {
+      MODO_COMPARACAO = modo;
+      document.getElementById('comparacaoFaturamento').classList.toggle('active', modo === 'FATURAMENTO');
+      document.getElementById('comparacaoAtingimento').classList.toggle('active', modo === 'ATINGIMENTO');
+      document.getElementById('comparacaoUnidades').classList.toggle('active', modo === 'UNIDADES');
+      renderizarComparacao(linhasBase(true));
+    }
+
+    function renderizarMarcas(linhas, acumulado) {
+      var grupos = agrupar(linhas, function(item){return item.marca;});
+      var registros = Object.keys(grupos).map(function(marca){
+        var resumo=resumir(grupos[marca],acumulado);
+        var tendencia=calcularTendenciaHistorica(linhasHistoricasRecorte(marca));
+        var status=classificarTendenciaHistorica(tendencia.disponivel?tendencia.variacao:null);
+        return { marca:marca, resumo:resumo, tendencia:tendencia, status:status };
+      });
+      registros.sort(function(a,b){
+        var valoresA={ realizado:a.resumo.realizado, atingimento:a.resumo.atingimento, unidades:a.resumo.realizadoQtd, desvio:a.resumo.desvio, tendencia:a.tendencia.disponivel?a.tendencia.variacao:null };
+        var valoresB={ realizado:b.resumo.realizado, atingimento:b.resumo.atingimento, unidades:b.resumo.realizadoQtd, desvio:b.resumo.desvio, tendencia:b.tendencia.disponivel?b.tendencia.variacao:null };
+        return compararOrdenacao(valoresA[ORDENACAO_MARCAS.campo],valoresB[ORDENACAO_MARCAS.campo],ORDENACAO_MARCAS.direcao)||a.marca.localeCompare(b.marca,'pt-BR');
+      });
+      atualizarIndicadoresOrdenacao('Marca',ORDENACAO_MARCAS);
+      var html = registros.map(function(registro){
+        var marca=registro.marca;
+        var resumo=registro.resumo;
+        var tendencia=registro.tendencia;
+        var status=registro.status;
+        var classeDesvio=resumo.desvio===null?'text-secondary':(resumo.desvio<0?'text-danger':'text-success');
+        return '<tr><td><strong>'+escaparHtml(marca)+'</strong></td><td class="text-end">'+moeda(resumo.realizado)+'</td><td class="text-end">'+(resumo.metaCompleta?moeda(resumo.meta):'<span class="meta-pendente">Pendente</span>')+'</td><td class="text-end">'+(resumo.atingimento===null?'—':percentual(resumo.atingimento))+'</td><td class="text-end">'+quantidade(resumo.realizadoQtd)+'</td><td class="text-end '+classeDesvio+'">'+(resumo.desvio===null?'—':moedaComSinal(resumo.desvio))+'</td><td class="text-end">'+(tendencia.disponivel?moeda(tendencia.mediaAtual):'—')+'</td><td class="text-end"><span class="status '+status.classe+'">'+status.texto+(tendencia.disponivel?' '+percentualComSinal(tendencia.variacao):'')+'</span></td></tr>';
+      }).join('');
+      document.getElementById('tabelaMarcas').innerHTML=html||'<tr><td colspan="8" class="empty">Sem dados para os filtros selecionados.</td></tr>';
+    }
+
+    function ordenarMarcas(campo) {
+      ORDENACAO_MARCAS = proximaOrdenacao(ORDENACAO_MARCAS, campo);
+      renderizarMarcas(linhasBase(false), filtrosAtuais().periodo === 'ACUMULADO');
+    }
+
+    function renderizarRepresentatividade(linhas) {
+      var gruposMarca=agrupar(linhas,function(item){return item.marca;});
+      var gruposLoja=agrupar(linhas,function(item){return item.loja;});
+      var marcas=Object.keys(gruposMarca).sort(function(a,b){return a.localeCompare(b,'pt-BR');});
+      var lojas=Object.keys(gruposLoja).sort(function(a,b){return nomeLoja(a).localeCompare(nomeLoja(b),'pt-BR');});
+      var html='<thead><tr><th>Loja</th>'+marcas.map(function(m){return '<th class="text-end">'+escaparHtml(m)+'</th>';}).join('')+'</tr></thead><tbody>';
+      lojas.forEach(function(loja){
+        html+='<tr><td><strong>'+escaparHtml(nomeLoja(loja))+'</strong></td>';
+        marcas.forEach(function(marca){
+          var total=soma(gruposMarca[marca],'realizadoR');
+          var pares=linhas.filter(function(item){return item.loja===loja&&item.marca===marca;});
+          var valor=pares.reduce(function(t,item){return t+numero(item.realizadoR);},0);
+          html+='<td class="text-end">'+(!pares.length?'<span class="text-secondary">Sem operação</span>':(total?percentual(valor/total):'0,0%'))+'</td>';
+        });
+        html+='</tr>';
+      });
+      html+='</tbody>';
+      document.getElementById('tabelaRepresentatividade').innerHTML=marcas.length&&lojas.length?html:'<tbody><tr><td class="empty">Sem dados para os filtros selecionados.</td></tr></tbody>';
+    }
+
+    function renderizarPlanejamento() {
+      var planejamento=CARGA.planejamento||{competencia:'',linhas:[],validacao:{erros:[],avisos:[]}};
+      var filtros=filtrosAtuais();
+      var linhas=planejamento.linhas.filter(function(item){return filtros.marca==='TODAS'||item.marca===filtros.marca;});
+      var grupos=agrupar(linhas,function(item){return item.marca;});
+      var marcas=Object.keys(grupos).sort(function(a,b){return a.localeCompare(b,'pt-BR');});
+      definirTexto('planejamentoCompetencia',labelCompetencia(planejamento.competencia));
+      var publicadas=linhas.filter(function(item){return item.statusPlanejamento==='PUBLICADO';}).length;
+      definirTexto('planejamentoResumo',linhas.length+' linha(s) · '+publicadas+' publicada(s)');
+      var validacao=planejamento.validacao||{};
+      var alertas=(validacao.erros||[]).concat(validacao.avisos||[]);
+      document.getElementById('planejamentoAlertas').innerHTML=alertas.length?alertas.map(function(item){return '<li>'+escaparHtml(item)+'</li>';}).join(''):'<li>Planejamento sem pendências estruturais.</li>';
+      var vendasAtual=CARGA.linhas.filter(function(item){return item.competencia===planejamento.competencia;});
+      var html=marcas.map(function(marca){
+        var itens=grupos[marca];
+        var metaR=primeiroValor(itens,'metaMarcaR');
+        var metaQtd=primeiroValor(itens,'metaMarcaQtd');
+        if (metaR !== null && metaR <= 0) metaR = null;
+        if (metaQtd !== null && metaQtd <= 0) metaQtd = null;
+        var somaPesos=itens.reduce(function(t,item){return t+(item.peso===null?0:numero(item.peso));},0);
+        var vendasMarca=vendasAtual.filter(function(item){return item.marca===marca;});
+        var totalMarca=soma(vendasMarca,'realizadoR');
+        var divergencias=itens.filter(function(item){return item.peso!==null;}).map(function(item){var realizado=vendasMarca.filter(function(v){return v.loja===item.loja;}).reduce(function(t,v){return t+numero(v.realizadoR);},0);return Math.abs(numero(item.peso)-(totalMarca?realizado/totalMarca:0));});
+        var desvioMedio=divergencias.length?divergencias.reduce(function(a,b){return a+b;},0)/divergencias.length:null;
+        var publicado=itens.length&&itens.every(function(item){return item.statusPlanejamento==='PUBLICADO';});
+        var data=itens.map(function(item){return item.dataPublicacao;}).filter(Boolean)[0]||'—';
+        return '<tr><td><strong>'+escaparHtml(marca)+'</strong></td><td class="text-end">'+(metaR===null?'Pendente':moeda(metaR))+'</td><td class="text-end">'+(metaQtd===null?'Pendente':quantidade(metaQtd))+'</td><td class="text-end">'+percentual(somaPesos)+'</td><td class="text-end">'+(desvioMedio===null?'—':formatarNumero(desvioMedio*100,1)+' p.p.')+'</td><td><span class="status '+(publicado?'good':'stable')+'">'+(publicado?'Publicado':'Rascunho')+'</span></td><td>'+escaparHtml(data)+'</td></tr>';
+      }).join('');
+      document.getElementById('tabelaPlanejamento').innerHTML=html||'<tr><td colspan="7" class="empty">Sem planejamento para o filtro selecionado.</td></tr>';
+    }
+
+    function abrirPlanejadorMetas() {
+      if (!CARGA || !CARGA.planejamento || !CARGA.planejamento.linhas.length) {
+        alert('Não há linhas de planejamento para a competência atual.');
+        return;
+      }
+      document.getElementById('conteudoDashboard').classList.add('d-none');
+      document.querySelector('.filterbar').classList.add('d-none');
+      document.getElementById('planejadorMetas').classList.remove('d-none');
+      construirPlanejamentoEdicao();
+      window.scrollTo(0, 0);
+    }
+
+    function voltarAoDashboard() {
+      document.getElementById('planejadorMetas').classList.add('d-none');
+      document.getElementById('conteudoDashboard').classList.remove('d-none');
+      document.querySelector('.filterbar').classList.remove('d-none');
+      atualizarBarraFiltrosCompacta();
+      renderizarTudo();
+    }
+
+    function construirPlanejamentoEdicao(pesosRevisados) {
+      var planejamento = CARGA.planejamento || { competencia:'', linhas:[] };
+      var linhas = planejamento.linhas || [];
+      var marcas = Object.keys(agrupar(linhas, function(item) { return item.marca; })).sort(function(a, b) {
+        return a.localeCompare(b, 'pt-BR');
+      });
+      var publicado = linhas.some(function(item) {
+        return item.statusPlanejamento === 'PUBLICADO';
+      });
+      var edicao = {
+        competencia:planejamento.competencia,
+        marcas:marcas,
+        metas:{},
+        pesos:{},
+        pesosRevisados:pesosRevisados || {},
+        publicado:publicado,
+        marcaSelecionada:marcas[0] || ''
+      };
+
+      marcas.forEach(function(marca) {
+        var itens = linhas.filter(function(item) { return item.marca === marca; });
+        var referencia = referenciaTresMesesPlanejamento(marca);
+        var ultimaMeta = (planejamento.ultimasMetasPorMarca || {})[marca] || {};
+        var metaAtualQtd = primeiroValor(itens, 'metaMarcaQtd');
+        var metaAtualR = primeiroValor(itens, 'metaMarcaR');
+        if (metaAtualQtd === null && ultimaMeta.metaMarcaQtd !== null && ultimaMeta.metaMarcaQtd !== undefined) {
+          metaAtualQtd = numero(ultimaMeta.metaMarcaQtd);
+        }
+        if ((metaAtualR === null || metaAtualR <= 0) && metaAtualQtd !== null && metaAtualQtd > 0) {
+          metaAtualR = referencia.ticket > 0
+            ? metaAtualQtd * referencia.ticket
+            : (ultimaMeta.metaMarcaR !== null && ultimaMeta.metaMarcaR !== undefined ? numero(ultimaMeta.metaMarcaR) : null);
+        }
+        edicao.metas[marca] = {
+          mediaR:referencia.mediaR,
+          mediaQtd:referencia.mediaQtd,
+          ticket:referencia.ticket,
+          competencias:referencia.competencias,
+          ultimaCompetencia:referencia.ultimaCompetencia,
+          ultimoR:referencia.ultimoR,
+          ultimoQtd:referencia.ultimoQtd,
+          metaQtd:metaAtualQtd,
+          metaR:metaAtualR,
+          financeiraManual:metaAtualR !== null && metaAtualR > 0
+        };
+        if ((metaAtualR === null || metaAtualR <= 0) && metaAtualQtd !== null && metaAtualQtd > 0 && referencia.ticket > 0) {
+          edicao.metas[marca].metaR = metaAtualQtd * referencia.ticket;
+          edicao.metas[marca].financeiraManual = false;
+        }
+
+        var linhasReferencia = linhasHistoricasPlanejamento(marca, referencia.competencias);
+        var totalMarca = soma(linhasReferencia, 'realizadoR');
+        var lojasPorCodigo = {};
+        ((planejamento.lojasDisponiveis || [])).forEach(function(loja) {
+          lojasPorCodigo[String(loja.codigoLoja)] = {
+            codigoLoja:String(loja.codigoLoja),
+            loja:loja.loja,
+            nomeLoja:loja.nomeLoja || nomeLoja(loja.loja),
+            ordem:numero(loja.ordem),
+            linhaPlanejamento:null
+          };
+        });
+        itens.forEach(function(item, ordem) {
+          var codigo = String(item.codigoLoja);
+          if (!lojasPorCodigo[codigo]) {
+            lojasPorCodigo[codigo] = {
+              codigoLoja:codigo,
+              loja:item.loja,
+              nomeLoja:item.nomeLoja || nomeLoja(item.loja),
+              ordem:10000 + ordem,
+              linhaPlanejamento:item
+            };
+          } else {
+            lojasPorCodigo[codigo].linhaPlanejamento = item;
+          }
+        });
+        edicao.pesos[marca] = Object.keys(lojasPorCodigo).map(function(codigo) {
+          var dadosLoja = lojasPorCodigo[codigo];
+          var item = dadosLoja.linhaPlanejamento;
+          var realizadoLoja = soma(linhasReferencia.filter(function(venda) {
+            return venda.loja === dadosLoja.loja;
+          }), 'realizadoR');
+          var participacao = totalMarca > 0 ? realizadoLoja / totalMarca : null;
+          var atual = !item || item.peso === null || item.peso === undefined ? 0 : numero(item.peso);
+          var ativa = !!item && item.statusPeso !== 'NAO_APLICAVEL';
+          return {
+            codigoLoja:dadosLoja.codigoLoja,
+            loja:dadosLoja.loja,
+            nomeLoja:dadosLoja.nomeLoja,
+            ordem:dadosLoja.ordem,
+            ativa:ativa,
+            participacao:participacao,
+            atual:atual,
+            sugerido:participacao === null ? 0 : participacao,
+            peso:ativa ? atual : 0
+          };
+        }).sort(function(a, b) { return a.ordem - b.ordem || a.nomeLoja.localeCompare(b.nomeLoja, 'pt-BR'); });
+      });
+
+      PLANEJAMENTO_EDICAO = edicao;
+      document.getElementById('tituloPlanejador').textContent = 'Metas e pesos · ' + labelCompetencia(edicao.competencia);
+      definirAvisoPlanejador(publicado
+        ? 'O planejamento desta competência já está publicado. Nesta versão, os dados publicados ficam protegidos contra alteração.'
+        : 'Preencha as metas por marca e, em seguida, confirme a distribuição dos pesos por loja.');
+      document.getElementById('etapaPesos').classList.add('d-none');
+      document.getElementById('etapaPublicacao').classList.add('d-none');
+      renderizarMetasPlanejador();
+    }
+
+    function referenciaTresMesesPlanejamento(marca) {
+      var competenciaAtual = (CARGA.planejamento || {}).competencia || '';
+      var competencias = CARGA.filtros.competencias.filter(function(item) {
+        return item.fechado && item.competencia < competenciaAtual;
+      }).map(function(item) {
+        return item.competencia;
+      }).sort().reverse().slice(0, 3).sort();
+      var linhas = linhasHistoricasPlanejamento(marca, competencias);
+      var totalR = soma(linhas, 'realizadoR');
+      var totalQtd = soma(linhas, 'realizadoQtd');
+      var divisor = competencias.length || 1;
+      var ultimaCompetencia = competencias.length ? competencias[competencias.length - 1] : '';
+      var linhasUltimoMes = ultimaCompetencia ? linhasHistoricasPlanejamento(marca, [ultimaCompetencia]) : [];
+      return {
+        competencias:competencias,
+        mediaR:totalR / divisor,
+        mediaQtd:totalQtd / divisor,
+        ticket:totalQtd > 0 ? Math.round((totalR / totalQtd) * 100) / 100 : 0,
+        ultimaCompetencia:ultimaCompetencia,
+        ultimoR:soma(linhasUltimoMes, 'realizadoR'),
+        ultimoQtd:soma(linhasUltimoMes, 'realizadoQtd')
+      };
+    }
+
+    function linhasHistoricasPlanejamento(marca, competencias) {
+      return CARGA.linhas.filter(function(item) {
+        return item.marca === marca && item.periodoFechado && competencias.indexOf(item.competencia) >= 0;
+      });
+    }
+
+    function renderizarMetasPlanejador() {
+      var edicao = PLANEJAMENTO_EDICAO;
+      if (!edicao) return;
+      var bloqueado = edicao.publicado;
+      var html = edicao.marcas.map(function(marca, indice) {
+        var meta = edicao.metas[marca];
+        return '<tr>' +
+          '<td><strong>' + escaparHtml(marca) + '</strong><div class="planner-reference">' + (meta.competencias.length ? meta.competencias.map(labelCompetencia).join(' · ') : 'Sem histórico fechado') + '</div></td>' +
+          '<td class="text-end">' + (meta.ultimaCompetencia ? moeda(meta.ultimoR) + '<div class="planner-reference">' + labelCompetencia(meta.ultimaCompetencia) + '</div>' : '—') + '</td>' +
+          '<td class="text-end">' + (meta.ultimaCompetencia ? quantidade(meta.ultimoQtd) : '—') + '</td>' +
+          '<td class="text-end">' + moeda(meta.mediaR) + '</td>' +
+          '<td class="text-end">' + quantidade(meta.mediaQtd) + '</td>' +
+          '<td class="text-end">' + (meta.ticket > 0 ? moeda(meta.ticket) : '—') + '</td>' +
+          '<td class="text-end"><input class="form-control form-control-sm planner-input ms-auto" type="number" min="0" step="1" value="' + valorInputPlanejador(meta.metaQtd, 0) + '" ' + (bloqueado ? 'disabled' : '') + ' oninput="alterarMetaUnidadesPlanejador(' + indice + ',this.value)"></td>' +
+          '<td class="text-end"><input class="form-control form-control-sm planner-input ms-auto" type="number" min="0" step="0.01" value="' + valorInputPlanejador(meta.metaR, 2) + '" ' + (bloqueado ? 'disabled' : '') + ' onchange="alterarMetaFinanceiraPlanejador(' + indice + ',this.value)"></td>' +
+          '</tr>';
+      }).join('');
+      document.getElementById('tabelaMetasPlanejador').innerHTML = html || '<tr><td colspan="8" class="empty">Sem marcas para planejar.</td></tr>';
+      document.getElementById('btnSalvarMetas').disabled = bloqueado;
+    }
+
+    function alterarMetaUnidadesPlanejador(indice, valor) {
+      var marca = PLANEJAMENTO_EDICAO.marcas[indice];
+      var meta = PLANEJAMENTO_EDICAO.metas[marca];
+      meta.metaQtd = numeroEntradaPlanejador(valor);
+      meta.metaR = meta.ticket > 0 && meta.metaQtd > 0 ? meta.metaQtd * meta.ticket : null;
+      meta.financeiraManual = false;
+      var entradas = document.querySelectorAll('#tabelaMetasPlanejador tr');
+      var entradaFinanceira = entradas[indice] && entradas[indice].querySelectorAll('input')[1];
+      if (entradaFinanceira) entradaFinanceira.value = valorInputPlanejador(meta.metaR, 2);
+    }
+
+    function alterarMetaFinanceiraPlanejador(indice, valor) {
+      var marca = PLANEJAMENTO_EDICAO.marcas[indice];
+      var meta = PLANEJAMENTO_EDICAO.metas[marca];
+      meta.metaR = numeroEntradaPlanejador(valor);
+      meta.financeiraManual = meta.metaR !== null;
+      renderizarMetasPlanejador();
+    }
+
+    function salvarMetasPlanejador() {
+      if (!PLANEJAMENTO_EDICAO || PLANEJAMENTO_EDICAO.publicado) return;
+      var metas = PLANEJAMENTO_EDICAO.marcas.map(function(marca) {
+        var item = PLANEJAMENTO_EDICAO.metas[marca];
+        return { marca:marca, metaR:item.metaR, metaQtd:item.metaQtd };
+      });
+      exibirCarregamento(true);
+      google.script.run
+        .withSuccessHandler(function(carga) {
+          exibirCarregamento(false);
+          CARGA = carga;
+          construirPlanejamentoEdicao();
+          document.getElementById('etapaPesos').classList.remove('d-none');
+          montarSeletorMarcaPlanejamento();
+          renderizarPesosPlanejador();
+        })
+        .withFailureHandler(function(falha) {
+          exibirCarregamento(false);
+          alert(mensagemErro(falha));
+        })
+        .salvarMetasPlanejamentoGerencial(TOKEN, metas);
+    }
+
+    function montarSeletorMarcaPlanejamento() {
+      var seletor = document.getElementById('marcaPlanejamento');
+      seletor.innerHTML = PLANEJAMENTO_EDICAO.marcas.map(function(marca) {
+        return '<option value="' + escaparHtml(marca) + '">' + escaparHtml(marca) + '</option>';
+      }).join('');
+      seletor.value = PLANEJAMENTO_EDICAO.marcaSelecionada;
+      if (!seletor.value && PLANEJAMENTO_EDICAO.marcas.length) seletor.value = PLANEJAMENTO_EDICAO.marcas[0];
+      PLANEJAMENTO_EDICAO.marcaSelecionada = seletor.value;
+    }
+
+    function selecionarMarcaPlanejamento() {
+      PLANEJAMENTO_EDICAO.marcaSelecionada = document.getElementById('marcaPlanejamento').value;
+      renderizarPesosPlanejador();
+    }
+
+    function renderizarPesosPlanejador() {
+      var edicao = PLANEJAMENTO_EDICAO;
+      if (!edicao || !edicao.marcaSelecionada) return;
+      var marca = edicao.marcaSelecionada;
+      var meta = edicao.metas[marca];
+      var pesos = edicao.pesos[marca] || [];
+      var bloqueado = edicao.publicado;
+      var metasPorLoja = distribuirMetasPlanejador(meta, pesos);
+      document.getElementById('subtituloPesosPlanejador').textContent = marca + ' · meta de ' + quantidade(meta.metaQtd) + ' unidades e ' + moeda(meta.metaR) + '.';
+      document.getElementById('tabelaPesosPlanejador').innerHTML = pesos.map(function(item) {
+        var metasLoja = metasPorLoja[String(item.codigoLoja)] || { metaR:0, metaQtd:0 };
+        var metaR = item.ativa ? metasLoja.metaR : 0;
+        var metaQtd = item.ativa ? metasLoja.metaQtd : 0;
+        return '<tr><td><strong>' + escaparHtml(item.nomeLoja) + '</strong><div class="planner-reference">' + escaparHtml(item.loja) + '</div></td>' +
+          '<td class="text-center"><div class="form-check form-switch d-inline-flex align-items-center gap-1"><input class="form-check-input m-0" type="checkbox" role="switch" ' + (item.ativa ? 'checked' : '') + ' ' + (bloqueado ? 'disabled' : '') + ' onchange="alterarAtivacaoLojaPlanejador(\'' + escaparAtributo(item.codigoLoja) + '\',this.checked)"><span class="planner-reference">' + (item.ativa ? 'Ativa' : 'Inativa') + '</span></div></td>' +
+          '<td class="text-end">' + (item.participacao === null ? 'Sem base' : percentual(item.participacao)) + '</td>' +
+          '<td class="text-end">' + percentual(item.atual) + '</td>' +
+          '<td class="text-end">' + percentual(item.sugerido) + '</td>' +
+          '<td class="text-end"><input class="form-control form-control-sm planner-input ms-auto" type="number" min="0" max="100" step="0.01" value="' + valorInputPlanejador(item.peso * 100, 2) + '" ' + (bloqueado || !item.ativa ? 'disabled' : '') + ' onchange="alterarPesoPlanejador(\'' + escaparAtributo(item.codigoLoja) + '\',this.value)"></td>' +
+          '<td class="text-end">' + (item.ativa ? moeda(metaR) : '—') + '</td><td class="text-end">' + (item.ativa ? quantidade(metaQtd) : '—') + '</td></tr>';
+      }).join('');
+      document.getElementById('btnSalvarPesos').disabled = bloqueado;
+      document.getElementById('btnSalvarTodosPesos').disabled = bloqueado;
+      atualizarResumoPesosPlanejador();
+    }
+
+    function distribuirMetasPlanejador(meta, pesos) {
+      var ativas = pesos.filter(function(item) { return item.ativa; });
+      var distribuicaoR = distribuirValorPorPesoPlanejador(meta.metaR, ativas, 100);
+      var distribuicaoQtd = distribuirValorPorPesoPlanejador(meta.metaQtd, ativas, 1);
+      var resultado = {};
+      ativas.forEach(function(item) {
+        var codigo = String(item.codigoLoja);
+        resultado[codigo] = {
+          metaR:(distribuicaoR[codigo] || 0) / 100,
+          metaQtd:distribuicaoQtd[codigo] || 0
+        };
+      });
+      return resultado;
+    }
+
+    function distribuirValorPorPesoPlanejador(valorTotal, pesos, multiplicador) {
+      var resultado = {};
+      if (!valorTotal || !pesos.length) return resultado;
+      var totalPesos = pesos.reduce(function(total, item) { return total + numero(item.peso); }, 0);
+      if (Math.abs(totalPesos - 1) >= 0.0000001) {
+        pesos.forEach(function(item) {
+          resultado[String(item.codigoLoja)] = Math.round(numero(valorTotal) * numero(item.peso) * multiplicador);
+        });
+        return resultado;
+      }
+      var totalEmMenorUnidade = Math.round(numero(valorTotal) * multiplicador);
+      var calculos = pesos.map(function(item) {
+        var exato = totalEmMenorUnidade * numero(item.peso);
+        var base = Math.floor(exato);
+        return { codigoLoja:String(item.codigoLoja), base:base, resto:exato - base };
+      });
+      var restante = totalEmMenorUnidade - calculos.reduce(function(total, item) { return total + item.base; }, 0);
+      calculos.sort(function(a, b) {
+        if (b.resto !== a.resto) return b.resto - a.resto;
+        return a.codigoLoja.localeCompare(b.codigoLoja, 'pt-BR');
+      });
+      for (var indice = 0; indice < restante; indice++) calculos[indice].base++;
+      calculos.forEach(function(item) { resultado[item.codigoLoja] = item.base; });
+      return resultado;
+    }
+
+    function alterarPesoPlanejador(codigoLoja, valor) {
+      var pesos = PLANEJAMENTO_EDICAO.pesos[PLANEJAMENTO_EDICAO.marcaSelecionada] || [];
+      var item = pesos.find(function(peso) { return peso.codigoLoja === String(codigoLoja); });
+      if (!item || !item.ativa) return;
+      item.peso = numeroEntradaPlanejador(valor) / 100;
+      PLANEJAMENTO_EDICAO.pesosRevisados[PLANEJAMENTO_EDICAO.marcaSelecionada] = false;
+      renderizarPesosPlanejador();
+    }
+
+    function alterarAtivacaoLojaPlanejador(codigoLoja, ativa) {
+      var pesos = PLANEJAMENTO_EDICAO.pesos[PLANEJAMENTO_EDICAO.marcaSelecionada] || [];
+      var item = pesos.find(function(peso) { return peso.codigoLoja === String(codigoLoja); });
+      if (!item) return;
+      item.ativa = !!ativa;
+      item.peso = item.ativa ? numero(item.sugerido) : 0;
+      PLANEJAMENTO_EDICAO.pesosRevisados[PLANEJAMENTO_EDICAO.marcaSelecionada] = false;
+      renderizarPesosPlanejador();
+    }
+
+    function usarPesosPlanejador(tipo) {
+      var pesos = PLANEJAMENTO_EDICAO.pesos[PLANEJAMENTO_EDICAO.marcaSelecionada] || [];
+      pesos.forEach(function(item) {
+        if (item.ativa) item.peso = tipo === 'SUGERIDO' ? item.sugerido : item.atual;
+      });
+      PLANEJAMENTO_EDICAO.pesosRevisados[PLANEJAMENTO_EDICAO.marcaSelecionada] = false;
+      renderizarPesosPlanejador();
+    }
+
+    function atualizarResumoPesosPlanejador() {
+      var pesos = PLANEJAMENTO_EDICAO.pesos[PLANEJAMENTO_EDICAO.marcaSelecionada] || [];
+      var total = pesos.filter(function(item) { return item.ativa; }).reduce(function(acumulado, item) {
+        return acumulado + numero(item.peso);
+      }, 0);
+      var pronto = Math.abs(total - 1) < 0.0000001;
+      document.getElementById('resumoPesosPlanejador').innerHTML = 'Soma dos pesos desejados: <strong class="' + (pronto ? 'text-success' : 'text-danger') + '">' + percentual(total) + '</strong>' + (pronto ? ' · distribuição pronta para salvar.' : ' · ajuste até totalizar 100%.');
+      var revisada = !!PLANEJAMENTO_EDICAO.pesosRevisados[PLANEJAMENTO_EDICAO.marcaSelecionada];
+      document.getElementById('statusRevisaoPesos').innerHTML = revisada
+        ? '<span class="status good">✓ Pesos revisados e salvos</span>'
+        : '<span class="text-secondary">Esta marca ainda não foi revisada e salva.</span>';
+    }
+
+    function salvarPesosPlanejador() {
+      var edicao = PLANEJAMENTO_EDICAO;
+      if (!edicao || edicao.publicado) return;
+      var marca = edicao.marcaSelecionada;
+      var pesos = edicao.pesos[marca] || [];
+      var total = pesos.filter(function(item) { return item.ativa; }).reduce(function(acumulado, item) { return acumulado + numero(item.peso); }, 0);
+      if (Math.abs(total - 1) >= 0.0000001) {
+        alert('A soma dos pesos deve totalizar 100% antes de salvar.');
+        return;
+      }
+      exibirCarregamento(true);
+      google.script.run
+        .withSuccessHandler(function(carga) {
+          exibirCarregamento(false);
+          var pesosRevisados = PLANEJAMENTO_EDICAO.pesosRevisados;
+          pesosRevisados[marca] = true;
+          CARGA = carga;
+          construirPlanejamentoEdicao(pesosRevisados);
+          PLANEJAMENTO_EDICAO.marcaSelecionada = marca;
+          document.getElementById('etapaPesos').classList.remove('d-none');
+          montarSeletorMarcaPlanejamento();
+          renderizarPesosPlanejador();
+          atualizarEtapaPublicacaoPlanejador();
+        })
+        .withFailureHandler(function(falha) {
+          exibirCarregamento(false);
+          alert(mensagemErro(falha));
+        })
+        .salvarPesosPlanejamentoGerencial(TOKEN, marca, pesos.map(function(item) {
+          return { codigoLoja:item.codigoLoja, peso:item.peso, ativa:item.ativa };
+        }));
+    }
+
+    function salvarTodosPesosPlanejador() {
+      var edicao = PLANEJAMENTO_EDICAO;
+      if (!edicao || edicao.publicado) return;
+      var marcasInvalidas = edicao.marcas.filter(function(marca) {
+        var total = (edicao.pesos[marca] || []).filter(function(item) { return item.ativa; }).reduce(function(acumulado, item) {
+          return acumulado + numero(item.peso);
+        }, 0);
+        return Math.abs(total - 1) >= 0.0000001;
+      });
+      if (marcasInvalidas.length) {
+        alert('A soma dos pesos deve totalizar 100% antes de salvar. Revise: ' + marcasInvalidas.join(', ') + '.');
+        return;
+      }
+      if (!confirm('Salvar os pesos de todas as marcas? Esta ação marcará todas como revisadas.')) return;
+      if (!confirm('Confirma o salvamento de todas as marcas? Revise os pesos antes de continuar.')) return;
+      var pesosPorMarca = {};
+      edicao.marcas.forEach(function(marca) {
+        pesosPorMarca[marca] = (edicao.pesos[marca] || []).map(function(item) {
+          return { codigoLoja:item.codigoLoja, peso:item.peso, ativa:item.ativa };
+        });
+      });
+      exibirCarregamento(true);
+      google.script.run
+        .withSuccessHandler(function(carga) {
+          exibirCarregamento(false);
+          var pesosRevisados = {};
+          edicao.marcas.forEach(function(marca) { pesosRevisados[marca] = true; });
+          CARGA = carga;
+          construirPlanejamentoEdicao(pesosRevisados);
+          document.getElementById('etapaPesos').classList.remove('d-none');
+          montarSeletorMarcaPlanejamento();
+          renderizarPesosPlanejador();
+          atualizarEtapaPublicacaoPlanejador();
+        })
+        .withFailureHandler(function(falha) {
+          exibirCarregamento(false);
+          alert(mensagemErro(falha));
+        })
+        .salvarTodosPesosPlanejamentoGerencial(TOKEN, pesosPorMarca);
+    }
+
+    function atualizarEtapaPublicacaoPlanejador() {
+      var completo = PLANEJAMENTO_EDICAO.marcas.every(function(marca) {
+        var meta = PLANEJAMENTO_EDICAO.metas[marca];
+        var pesos = (PLANEJAMENTO_EDICAO.pesos[marca] || []).filter(function(item) { return item.ativa; });
+        var somaPesos = pesos.reduce(function(total, item) { return total + numero(item.peso); }, 0);
+        return meta.metaR > 0 && meta.metaQtd > 0 && Math.abs(somaPesos - 1) < 0.0000001 && PLANEJAMENTO_EDICAO.pesosRevisados[marca];
+      });
+      document.getElementById('etapaPublicacao').classList.toggle('d-none', !completo);
+      if (completo) {
+        document.getElementById('resumoPublicacaoPlanejador').textContent = PLANEJAMENTO_EDICAO.marcas.length + ' marca(s) com metas e pesos completos para ' + labelCompetencia(PLANEJAMENTO_EDICAO.competencia) + '.';
+      }
+    }
+
+    function publicarPlanejamentoDoPainel() {
+      if (!PLANEJAMENTO_EDICAO || PLANEJAMENTO_EDICAO.publicado) return;
+      if (!confirm('Publicar as metas e os pesos da competência atual? Esta ação liberará o planejamento para os painéis.')) return;
+      exibirCarregamento(true);
+      google.script.run
+        .withSuccessHandler(function() {
+          exibirCarregamento(false);
+          voltarAoDashboard();
+          carregarPainel();
+        })
+        .withFailureHandler(function(falha) {
+          exibirCarregamento(false);
+          alert(mensagemErro(falha));
+        })
+        .publicarPlanejamentoGerencial(TOKEN);
+    }
+
+    function definirAvisoPlanejador(texto) {
+      var aviso = document.getElementById('avisoPlanejador');
+      aviso.textContent = texto;
+      aviso.classList.remove('d-none');
+    }
+
+    function valorInputPlanejador(valor, casas) {
+      if (valor === null || valor === undefined || !isFinite(Number(valor)) || Number(valor) <= 0) return '';
+      return Number(valor).toFixed(casas);
+    }
+
+    function numeroEntradaPlanejador(valor) {
+      var numeroConvertido = Number(String(valor == null ? '' : valor).replace(',', '.'));
+      return isFinite(numeroConvertido) && numeroConvertido > 0 ? numeroConvertido : null;
+    }
+
+    function escaparAtributo(valor) {
+      return String(valor == null ? '' : valor).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+    }
+
+    function opcoesGrafico(tipo, mostrarLegenda, mostrarRotulos) {
+      return {
+        responsive:true,
+        maintainAspectRatio:false,
+        layout:{padding:{top:30,right:30,bottom:6,left:30}},
+        interaction:{mode:'index',intersect:false},
+        scales:{
+          y:{beginAtZero:true,ticks:{callback:function(valor){return formatarValorGrafico(valor,tipo,true);}},grid:{color:'#eee'}},
+          x:{grid:{display:false}}
+        },
+        plugins:{
+          legend:{display:!!mostrarLegenda,position:'bottom',labels:{boxWidth:10,font:{size:10}}},
+          tooltip:{callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': '+formatarValorGrafico(ctx.raw,tipo,false);}}},
+          rotulosDados:{display:!!mostrarRotulos,fontSize:10,fontWeight:700,offset:function(indiceDataset){return indiceDataset%2===0?10:-13;},formatter:function(valor){return formatarValorGrafico(valor,tipo,true);}}
+        }
+      };
+    }
+
+    function proximaOrdenacao(atual, campo) {
+      if (!atual.interagiu || atual.campo !== campo) return { campo:campo, direcao:'desc', interagiu:true };
+      return { campo:campo, direcao:atual.direcao === 'desc' ? 'asc' : 'desc', interagiu:true };
+    }
+
+    function compararOrdenacao(valorA, valorB, direcao) {
+      var ausenteA = valorA === null || valorA === undefined || !isFinite(Number(valorA));
+      var ausenteB = valorB === null || valorB === undefined || !isFinite(Number(valorB));
+      if (ausenteA && ausenteB) return 0;
+      if (ausenteA) return 1;
+      if (ausenteB) return -1;
+      return direcao === 'desc' ? Number(valorB) - Number(valorA) : Number(valorA) - Number(valorB);
+    }
+
+    function atualizarIndicadoresOrdenacao(tipo, ordenacao) {
+      document.querySelectorAll('[id^="ordem' + tipo + '"]').forEach(function(item){item.textContent='';});
+      if (!ordenacao.interagiu) return;
+      var sufixos = { realizado:'Realizado', atingimento:'Atingimento', unidades:'Unidades', atingimentoQtd:'AtingimentoQtd', desvio:'Desvio', tendencia:'Tendencia' };
+      var indicador = document.getElementById('ordem' + tipo + sufixos[ordenacao.campo]);
+      if (indicador) indicador.textContent = ordenacao.direcao === 'desc' ? '↓' : '↑';
+    }
+
+    function textoProjecao(indice, acumulado) {
+      if (indice === null) return (acumulado ? 'Projeção acumulada' : 'Projeção do mês') + ' · meta pendente';
+      return (acumulado ? 'Projeção acumulada' : 'Projeção do mês') + ' · ' + percentual(indice) + ' da meta';
+    }
+
+    function formatarValorGrafico(valor,tipo,compacto) {
+      if (valor === null || valor === undefined) return '—';
+      if (tipo === 'money') return compacto ? moedaCompacta(valor) : moeda(valor);
+      if (tipo === 'quantity') return compacto ? quantidadeCompacta(valor) : quantidade(valor);
+      return formatarNumero(valor,1)+'%';
+    }
+
+    function rotuloModo(modo) {
+      if (modo === 'UNIDADES') return 'Unidades';
+      if (modo === 'ATINGIMENTO') return 'Atingimento';
+      return 'Faturamento';
+    }
+
+    function rotuloCompetenciaGrafico(competencia) {
+      var item=CARGA.filtros.competencias.find(function(p){return p.competencia===competencia;});
+      if (!item) return competencia;
+      return MESES[item.mesNum]+(item.fechado?'':'*');
+    }
+
+    function agrupar(lista, seletor) { return lista.reduce(function(mapa,item){ var chave=seletor(item); if(!mapa[chave]) mapa[chave]=[]; mapa[chave].push(item); return mapa; },{}); }
+    function soma(lista, campo) { return lista.reduce(function(total,item){return total + numero(item[campo]);},0); }
+    function numero(valor) { var n=Number(valor); return isFinite(n) ? n : 0; }
+    function moeda(valor) { return numero(valor).toLocaleString('pt-BR',{style:'currency',currency:'BRL'}); }
+    function moedaCompacta(valor) { return numero(valor).toLocaleString('pt-BR',{style:'currency',currency:'BRL',notation:'compact',maximumFractionDigits:1}); }
+    function moedaComSinal(valor,semMoeda) { var n=numero(valor); var texto=semMoeda?quantidade(Math.abs(n)):moeda(Math.abs(n)); return (n>0?'+':(n<0?'−':''))+texto; }
+    function quantidade(valor) { return Math.round(numero(valor)).toLocaleString('pt-BR'); }
+    function quantidadeDecimal(valor) { return numero(valor).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}); }
+    function quantidadeCompacta(valor) { return numero(valor).toLocaleString('pt-BR',{notation:'compact',maximumFractionDigits:1}); }
+    function percentual(valor) { return (numero(valor)*100).toLocaleString('pt-BR',{minimumFractionDigits:1,maximumFractionDigits:1}) + '%'; }
+    function percentualComSinal(valor) { var n=numero(valor); return (n>0?'+':'')+percentual(n); }
+    function pontosPercentuaisComSinal(valor) { var n=numero(valor)*100; return (n>0?'+':(n<0?'−':''))+formatarNumero(Math.abs(n),1)+' p.p.'; }
+    function formatarNumero(valor,casas) { return numero(valor).toLocaleString('pt-BR',{minimumFractionDigits:casas,maximumFractionDigits:casas}); }
+    function labelCompetencia(chave) { var item=CARGA.filtros.competencias.find(function(p){return p.competencia===chave;}); return item ? item.label : chave; }
+    function nomeLoja(sigla) { var item=CARGA.filtros.lojas.find(function(loja){return loja.sigla===sigla;}); return item ? item.nome : sigla; }
+    function primeiroValor(lista,campo) { for(var i=0;i<lista.length;i++){if(lista[i][campo]!==null&&lista[i][campo]!==''&&lista[i][campo]!==undefined)return numero(lista[i][campo]);} return null; }
+    function definirTexto(id,texto,classe) { var el=document.getElementById(id); if(!el)return; el.textContent=texto; ['meta-pendente','good','bad','stable'].forEach(function(c){el.classList.remove(c);}); if(classe)el.classList.add(classe); }
+    function destruirGrafico(nome) { if(GRAFICOS[nome]) { GRAFICOS[nome].destroy(); GRAFICOS[nome]=null; } }
+    function escaparHtml(valor) { return String(valor == null ? '' : valor).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];}); }
+    function exibirCarregamento(exibir) { document.getElementById('carregando').style.display=exibir?'flex':'none'; }
+    function mensagemErro(erro) { return erro && erro.message ? erro.message : 'Não foi possível concluir a operação.'; }
+    function sair() { var token=TOKEN; TOKEN=''; try { sessionStorage.removeItem('tokenGerencial'); } catch (erroStorage) {} google.script.run.encerrarSessaoGerencial(token); document.getElementById('aplicacao').classList.add('d-none'); document.getElementById('login').classList.remove('d-none'); }
+  </script>
+</body>
+</html>
