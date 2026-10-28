@@ -64,7 +64,7 @@ Os projetos listados abaixo possuem diretórios próprios com os materiais dispo
 
 | Projeto | Área de negócio | Tecnologias | Descrição |
 |---|---|---|---|
-| [Painel Vendas Varejo](./Painel%20De%20Vendas%20Varejo/) | Inteligência comercial e sell-out no varejo | `Power Query (M)`, `Excel`, `Google Sheets`, `Google Apps Script`, `JavaScript`, `Chart.js`, `Bootstrap 5` | Processo de preparação e análise de vendas no varejo, com distribuição de metas, cálculo de Run-Rate e aplicação web com controle de acesso por perfil (RBAC). O cenário documentado considera vendas de aproximadamente R$ 865 mil por mês em seis filiais. O processo de ETL reduziu em 85% o tempo de fechamento diário, conforme a medição do projeto. A solução também inclui uma matriz de escalonamento de bonificação. |
+| [Painel Vendas Varejo](./Painel%20De%20Vendas%20Varejo/) | Inteligência comercial e sell-out no varejo | `Power Query (M)`, `Excel`, `Google Sheets`, `Google Apps Script`, `JavaScript`, `Chart.js`, `Bootstrap 5` | Processo de preparação e análise de vendas no varejo, com distribuição de metas, cálculo de Run-Rate e aplicação web com controle de acesso por perfil (RBAC). O cenário documentado considera vendas de aproximadamente R$ 865 mil por mês em seis filiais. O processo de ETL reduziu em 85% o tempo de fechamento diário, conforme a medição do projeto. |
 
 Novos projetos envolvendo SQL, Python e Power BI serão incluídos à medida que a documentação e a preparação dos materiais para publicação forem concluídas.
 
